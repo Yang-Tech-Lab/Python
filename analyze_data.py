@@ -1,20 +1,21 @@
 import pandas as pd
 
-print("1. 正在读取 Excel 文件...")
-# 读取文件
+print("1. Reading Excel file...")
+# Load the dataset
 df = pd.read_excel('fiverr_sales.xlsx')
 
-# 2. 计算每一单赚了多少钱
-df['销售总额'] = df['单价'] * df['销量']
+# 2. Calculate revenue per order
+# Renaming columns to English for better compatibility
+df['Total_Sales'] = df['Unit_Price'] * df['Quantity']
 
-# 3. 计算总收入 (用来给你自己看)
-total_money = df['销售总额'].sum()
-print(f"💰 今天的总收入是: ${total_money}")
+# 3. Calculate total revenue (for internal tracking)
+total_revenue = df['Total_Sales'].sum()
+print(f"💰 Total revenue today: ${total_revenue}")
 
-print("4. 正在生成给客户的报表...")
+print("4. Generating client report...")
 
-# 5. 【最关键的一步】把算好的数据，保存成一个新的 Excel
-# index=False 的意思是：不要把 0,1,2,3 这种行号写进去，客户不喜欢看
+# 5. Export the processed data to a new Excel file
+# Setting index=False to exclude row numbers for a cleaner client-facing document
 df.to_excel('fiverr_report_finished.xlsx', index=False)
 
-print("✅ 搞定！[fiverr_report_finished.xlsx] 已保存到你的文件夹。")
+print("✅ Success! [fiverr_report_finished.xlsx] has been saved to your directory.")
