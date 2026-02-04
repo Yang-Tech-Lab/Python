@@ -1,38 +1,65 @@
-import requests
+"""
+AssetSentinel Pro: Automated Crypto/Stock Threshold Monitor
+-----------------------------------------------------------
+A lightweight monitoring engine that tracks asset prices and triggers 
+automated alerts when thresholds are breached.
+
+Author: Yang Jiacheng (Yang-Tech-Lab)
+License: MIT
+"""
+
 import random
+import logging
 from datetime import datetime
-import os
+from typing import Final
 
-print("☁️ 云端哨兵启动...")
+# Configure professional logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - [%(levelname)s] - %(message)s'
+)
 
-# --- 1. 配置区域 ---
-TARGET_ASSET = "BTC-USD"
-# 设定一个报警阈值 (假设比特币跌破 98000)
-ALERT_PRICE = 98000
+class AssetMonitor:
+    def __init__(self, ticker: str, threshold: float):
+        self.ticker: str = ticker
+        self.threshold: float = threshold
+        self.log_file: Final[str] = "alert_history.log"
 
-# --- 2. 核心功能 ---
-def get_price():
-    # 模拟获取价格 (因为 GitHub 服务器有时候访问 Yahoo 也会受限，我们用随机数模拟最稳)
-    # 真实项目中可以用 requests 访问 API
-    price = random.uniform(95000, 100000)
-    return round(price, 2)
+    def fetch_market_price(self) -> float:
+        """
+        Simulates fetching real-time market data.
+        In production, replace with CCXT or Yahoo Finance API.
+        """
+        # Simulated volatility for BTC-style assets
+        return round(random.uniform(95000, 105000), 2)
 
-def run_check():
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    current_price = get_price()
-    
-    print(f"[{now}] 检查目标: {TARGET_ASSET}")
-    print(f"当前价格: ${current_price:,.2f}")
-    
-    # 逻辑判断
-    if current_price < ALERT_PRICE:
-        print("🚨 触发警报！价格过低！")
-        # 在真实项目中，这里会调用发邮件的代码
-        # 为了演示，我们把警报写入一个文件，作为证据
-        with open("alert_log.txt", "a") as f:
-            f.write(f"[{now}] ALERT! {TARGET_ASSET} dropped to ${current_price}\n")
-    else:
-        print("✅ 价格正常。")
+    def trigger_alert(self, current_price: float):
+        """Executes alert sequence and logs critical data."""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        alert_msg = f"CRITICAL: {self.ticker} dropped to ${current_price:,.2f} (Threshold: ${self.threshold:,.2f})"
+        
+        logging.warning(f"🚨 {alert_msg}")
+        
+        with open(self.log_file, "a", encoding="utf-8") as f:
+            f.write(f"[{timestamp}] {alert_msg}\n")
+
+    def execute_check(self):
+        """Main execution flow for price monitoring."""
+        logging.info(f"🔍 Monitoring Asset: {self.ticker}")
+        
+        current_price = self.fetch_market_price()
+        logging.info(f"Current Market Price: ${current_price:,.2f}")
+
+        if current_price < self.threshold:
+            self.trigger_alert(current_price)
+        else:
+            logging.info("✅ Price remains within safe operational limits.")
 
 if __name__ == "__main__":
-    run_check()
+    # Configuration: Asset Ticker and Price Floor
+    # Example: BTC-USD with a $98,000 alert floor
+    monitor = AssetMonitor(ticker="BTC-USD", threshold=98000.00)
+    
+    print("--- Sentinel Protocol Initiated ---")
+    monitor.execute_check()
+    print("--- Session Complete ---")
