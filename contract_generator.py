@@ -1,64 +1,103 @@
-from docx import Document
-from docx.shared import Pt, RGBColor # 用来设置字体大小和颜色
-from docx.enum.text import WD_ALIGN_PARAGRAPH # 用来对齐文本
-from datetime import datetime
+"""
+LegalDoc Engine Pro: Automated Service Agreement Generator
+----------------------------------------------------------
+A high-performance document automation system designed to generate 
+legally-structured Service Agreements for international clients.
+
+Author: Yang Jiacheng (Yang-Tech-Lab)
+Category: Business Process Automation / LegalTech
+"""
+
 import os
+import logging
+from datetime import datetime
+from typing import List, Dict
+from docx import Document
+from docx.shared import Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-print("🚀 合同批量生成器启动...")
+# 1. Initialize Professional Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - [%(levelname)s] - %(message)s'
+)
 
-# 1. 模拟客户数据 (在真实订单中，这些数据通常来自 Excel)
-clients = [
-    {"name": "Google Inc.", "price": "10,000", "service": "Data Scraping"},
-    {"name": "Tesla Motors", "price": "25,000", "service": "PCB Design"},
-    {"name": "SpaceX", "price": "50,000", "service": "Full Stack Automation"}
-]
+class ContractEngine:
+    def __init__(self, output_dir: str = "Generated_Contracts"):
+        self.output_dir = output_dir
+        self.provider_name = "Yang Jiacheng (Yang-Lab)"
+        self._ensure_output_path()
 
-# 创建输出文件夹
-output_folder = "Generated_Contracts"
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
+    def _ensure_output_path(self):
+        """Creates the target directory if it does not exist."""
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+            logging.info(f"Initialized output directory: {self.output_dir}")
 
-# 2. 开始循环生成
-for client in clients:
-    print(f"📄 正在为 {client['name']} 生成合同...")
-    
-    # --- 创建一个空白 Word 文档 ---
-    doc = Document()
-    
-    # --- A. 添加标题 ---
-    heading = doc.add_heading('SERVICE AGREEMENT', 0)
-    heading.alignment = WD_ALIGN_PARAGRAPH.CENTER # 居中
-    
-    # --- B. 添加正文段落 ---
-    # f-string 里的内容就是动态替换的
-    doc.add_paragraph(f"Date: {datetime.now().strftime('%Y-%m-%d')}")
-    doc.add_paragraph(f"Client: {client['name']}")
-    
-    doc.add_paragraph("-" * 30) # 分割线
-    
-    # 正文内容
-    p = doc.add_paragraph("This contract confirms that Yang (The Provider) will provide ")
-    p.add_run(f"{client['service']}").bold = True # 加粗服务名称
-    p.add_run(" services to the Client.")
-    
-    p2 = doc.add_paragraph("The total agreed fee for this project is: ")
-    run = p2.add_run(f"${client['price']}") 
-    run.bold = True
-    run.font.color.rgb = RGBColor(0, 128, 0) # 把价格变成绿色，看着吉利
-    
-    doc.add_paragraph("-" * 30)
-    
-    # --- C. 添加签字区 ---
-    doc.add_paragraph("\n\n") # 空两行
-    doc.add_paragraph("Signed by: ____________________")
-    doc.add_paragraph("Yang (Developer)")
-    
-    # --- D. 保存文件 ---
-    # 文件名也是自动生成的
-    file_name = f"{output_folder}/Contract_{client['name']}.docx"
-    doc.save(file_name)
-    
-    print(f"✅ 已保存: {file_name}")
+    def generate(self, client_data: Dict[str, str]):
+        """Generates a professional Service Agreement for a specific client."""
+        client_name = client_data.get("name")
+        service_scope = client_data.get("service")
+        fee = client_data.get("price")
 
-print("-" * 30)
-print(f"🎉 全部完成！请去 [{output_folder}] 文件夹查看你的 Word 文档。")
+        doc = Document()
+
+        # --- Section A: Document Header ---
+        header = doc.add_heading('MASTER SERVICE AGREEMENT', 0)
+        header.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        # --- Section B: Metadata & Parties ---
+        doc.add_paragraph(f"Execution Date: {datetime.now().strftime('%B %d, %Y')}")
+        doc.add_paragraph(f"Client: {client_name}")
+        doc.add_paragraph(f"Service Provider: {self.provider_name}")
+        doc.add_paragraph("-" * 50)
+
+        # --- Section C: Scope of Work (SOW) ---
+        sow_title = doc.add_heading('1. Scope of Work', level=1)
+        p1 = doc.add_paragraph("The Provider hereby agrees to perform the following professional services: ")
+        run_service = p1.add_run(f"[{service_scope}]")
+        run_service.bold = True
+        run_service.font.color.rgb = RGBColor(44, 62, 80) # Dark Blue-Grey
+
+        # --- Section D: Financial Terms ---
+        fee_title = doc.add_heading('2. Consideration and Payment', level=1)
+        p2 = doc.add_paragraph("In consideration for the services provided, the total project fee is fixed at: ")
+        run_fee = p2.add_run(f"${fee} USD")
+        run_fee.bold = True
+        run_fee.font.size = Pt(12)
+        run_fee.font.color.rgb = RGBColor(39, 174, 96) # Professional Emerald Green
+
+        doc.add_paragraph("-" * 50)
+
+        # --- Section E: Execution Block ---
+        doc.add_paragraph("\n[SIGNATURE PAGE FOLLOWS]")
+        doc.add_paragraph("\nBy: __________________________")
+        doc.add_paragraph(f"Authorized Representative: {self.provider_name}")
+
+        # Save the finalized document
+        file_path = os.path.join(self.output_dir, f"Agreement_{client_name.replace(' ', '_')}.docx")
+        doc.save(file_path)
+        logging.info(f"Successfully compiled contract for: {client_name}")
+
+    def batch_process(self, clients_list: List[Dict[str, str]]):
+        """Processes multiple contracts in sequence."""
+        logging.info(f"Starting batch production for {len(clients_list)} entities...")
+        for client in clients_list:
+            try:
+                self.generate(client)
+            except Exception as e:
+                logging.error(f"Failed to process {client.get('name')}: {e}")
+        logging.info("Batch operation completed successfully.")
+
+if __name__ == "__main__":
+    # Mock Enterprise Client Data
+    # Including tech leaders to reflect your full-stack & hardware interests
+    client_registry = [
+        {"name": "Google Inc.", "price": "10,000", "service": "Automated Web Intelligence Pipeline"},
+        {"name": "Tesla Motors", "price": "25,000", "service": "Embedded System & PCB Architecture"},
+        {"name": "SpaceX", "price": "50,000", "service": "Full-Stack Aerospace Automation Suite"}
+    ]
+
+    # Execute the Engine
+    engine = ContractEngine()
+    engine.batch_process(client_registry)
