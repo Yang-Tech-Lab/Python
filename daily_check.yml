@@ -1,35 +1,49 @@
-name: Crypto Sentinel Bot
+name: Asset-Sentinel-CI-CD-Pipeline
 
-# 设定触发条件
+# -------------------------------------------------------------------
+# Trigger Configuration: Automated Polling & Manual Override
+# -------------------------------------------------------------------
 on:
-  # 1. 定时触发 (Schedule)
   schedule:
-    # 分 时 日 月 周 (UTC时间)
-    # "0 0 * * *" 代表每天 UTC 0点 (北京时间早上8点) 运行
-    # 为了测试，我们暂时不依赖定时，主要靠手动触发
+    # Standard Cron Syntax: Runs at 00:00 UTC Daily (08:00 AM CST)
+    # Ensures consistent "Green Wall" activity and market surveillance.
     - cron: '0 0 * * *'
   
-  # 2. 手动触发 (方便我们现在测试)
+  # Enables manual execution for ad-hoc debugging or real-time checks.
   workflow_dispatch:
 
+# -------------------------------------------------------------------
+# Jobs Definition: Cloud Environment Provisioning
+# -------------------------------------------------------------------
 jobs:
-  build:
-    runs-on: ubuntu-latest  # 使用 GitHub 提供的 Ubuntu 服务器
+  monitor_task:
+    name: Execute Sentinel Surveillance Protocol
+    runs-on: ubuntu-latest  # High-performance virtual environment provided by GitHub
 
     steps:
-      - name: Checkout code (下载代码)
+      - name: 1. Initialize Workspace & Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up Python (安装 Python)
+      - name: 2. Provision Python Runtime (v3.9)
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+          # Opting for cache: 'pip' can speed up repeated runs in the future
+          # cache: 'pip'
 
-      - name: Install dependencies (安装库)
+      - name: 3. Deploy Dependency Environment
         run: |
-          pip install requests
+          python -m pip install --upgrade pip
+          pip install requests pandas schedule
+          # Using 'requirements.txt' is recommended for more complex portfolios
 
-      - name: Run Script (运行脚本)
+      - name: 4. Execute Sentinel Surveillance Script
+        # Ensure the filename matches your actual Python script
         run: |
-          # 注意：这里的文件名要和你刚才新建的 python 文件名一致
           python cloud_sentinel.py
+        env:
+          # If you eventually add real APIs, store keys in GitHub Secrets
+          # API_KEY: ${{ secrets.FINANCE_API_KEY }}
+
+      - name: 5. Finalize and Log Completion
+        run: echo "Surveillance Cycle Successfully Completed at $(date)"
