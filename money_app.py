@@ -1,54 +1,90 @@
+"""
+Wealth-Compound Intelligence Engine
+-----------------------------------
+A professional-grade financial simulation utility designed to model 
+long-term asset accretion via automated compounding algorithms.
+
+Author: Yang Jiacheng (Yang-Tech-Lab)
+Category: Fintech / Web Automation
+Date: February 2026
+"""
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
-# 1. 设置网页标题
-st.title('💰 我的财富雪球预测机')
-st.write('这是一个基于 Python 的交互式金融预测工具。')
+# 1. Page Configuration (Enterprise Branding)
+st.set_page_config(page_title="Wealth-Lab Pro", page_icon="📈", layout="wide")
 
-# 2. 侧边栏：放控制钮
-st.sidebar.header('⚙️ 参数设置')
+st.title('🚀 Wealth-Compound Intelligence Engine')
+st.markdown("""
+This interactive simulation models the trajectory of **capital accretion** over time. 
+Leveraging the power of exponential growth, it projects the future value of systemic investments.
+""")
 
-# 拖动条：每月定投多少钱？
-monthly_investment = st.sidebar.slider('每月定投金额 ($)', 100, 5000, 500)
+# 2. Deployment Parameters (Sidebar)
+st.sidebar.header('⚙️ Configuration Metrics')
 
-# 拖动条：投多少年？
-years = st.sidebar.slider('投资时长 (年)', 1, 30, 10)
+# Use standard financial terms: Monthly Contribution, Horizon, and Annual Yield
+monthly_contribution = st.sidebar.slider('Monthly Contribution ($)', 100, 10000, 1000)
+investment_horizon = st.sidebar.slider('Investment Horizon (Years)', 1, 40, 20)
+# Default set to 15% to reflect historical Nasdaq-100 (QQQ) benchmarks
+target_annual_yield = st.sidebar.slider('Target Annual Yield (%)', 1, 30, 15)
 
-# 拖动条：年化收益率 (默认设为 QQQ 的 15%)
-annual_rate = st.sidebar.slider('预期年化收益率 (%)', 1, 30, 15)
+# 3. Core Simulation Logic
+# Formula: Future Value of an Annuity
+# FV = P * [((1 + r)^n - 1) / r]
+months = investment_horizon * 12
+monthly_rate = (target_annual_yield / 100) / 12
 
-# 3. 核心计算逻辑 (和之前一样)
-months = years * 12
-monthly_rate = (annual_rate / 100) / 12
 future_value = 0
-total_invested = 0
-wealth_path = []
+total_principal = 0
+equity_trajectory = []
 
-for i in range(months):
-    future_value = future_value * (1 + monthly_rate) + monthly_investment
-    total_invested += monthly_investment
-    wealth_path.append(future_value)
+for _ in range(months):
+    future_value = (future_value + monthly_contribution) * (1 + monthly_rate)
+    total_principal += monthly_contribution
+    equity_trajectory.append(future_value)
 
-profit = future_value - total_invested
+net_capital_gain = future_value - total_principal
 
-# 4. 展示关键数据 (大字体)
+# 4. Key Performance Indicators (KPIs)
+st.divider()
 col1, col2, col3 = st.columns(3)
-col1.metric("总投入本金", f"${total_invested:,.0f}")
-col2.metric("最终总资产", f"${future_value:,.0f}")
-col3.metric("纯利润", f"${profit:,.0f}", delta_color="normal")
 
-# 5. 画图 (直接在网页上画)
-st.subheader('📈 财富增长曲线')
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(wealth_path, color='#FFD700', linewidth=3, label='Total Wealth')
-ax.plot([0, months], [0, total_invested], color='gray', linestyle='--', label='Invested Cash')
-ax.legend()
-ax.grid(True, alpha=0.3)
+with col1:
+    st.metric("Invested Principal", f"${total_principal:,.0f}")
+with col2:
+    st.metric("Projected Equity", f"${future_value:,.0f}")
+with col3:
+    st.metric("Net Capital Gain", f"${net_capital_gain:,.0f}", delta=f"{((net_capital_gain/total_principal)*100):.1f}%")
 
-# 把图表显示在网页上
+# 5. Visual Intelligence Layer
+st.subheader('📈 Asset Accretion Trajectory')
+
+# Professional Plotting with Matplotlib
+fig, ax = plt.subplots(figsize=(12, 6))
+plt.style.use('dark_background') # Aesthetic matching your developer profile
+
+ax.fill_between(range(months), equity_trajectory, color='#3498db', alpha=0.3, label='Compounded Growth')
+ax.plot(equity_trajectory, color='#3498db', linewidth=3, label='Total Portfolio Value')
+ax.plot([0, months], [0, total_principal], color='#e74c3c', linestyle='--', label='Principal Baseline')
+
+ax.set_title("Long-Term Wealth Projection", fontsize=16, color='white', pad=20)
+ax.set_xlabel("Months in Market", fontsize=10, color='#bdc3c7')
+ax.set_ylabel("Portfolio Valuation ($)", fontsize=10, color='#bdc3c7')
+ax.legend(facecolor='#2c3e50')
+ax.grid(True, alpha=0.1)
+
+# Render plot to Streamlit
 st.pyplot(fig)
 
-# 6. 底部版权
-st.markdown("---")
-st.caption("Developed by Yang | Powering your financial freedom")
+# 6. Technical Footer & Documentation
+st.divider()
+with st.expander("📝 View Mathematical Foundation"):
+    st.write("The engine utilizes the **Future Value of an Ordinary Annuity** formula:")
+    st.latex(r"FV = P \times \frac{(1 + r)^n - 1}{r}")
+    st.caption("Where P = Periodic Payment, r = Periodic Interest Rate, n = Total Number of Periods.")
+
+st.caption("Engineered by Yang Jiacheng | Powering remote financial freedom through code.")
