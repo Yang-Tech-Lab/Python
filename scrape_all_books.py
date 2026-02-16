@@ -1,52 +1,97 @@
+"""
+Multi-Page Data Extraction Engine
+---------------------------------
+A professional-grade web scraper designed for robust, multi-page data 
+acquisition and structured persistence.
+
+Author: Yang Jiacheng (Yang-Tech-Lab)
+Category: Data Engineering / Automation
+Date: February 2026
+"""
+
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
-import time # 引入时间库，用来模拟休息
+import time
+import logging
+from typing import List, Dict, Final
 
-print("🚀 启动超级爬虫！准备抓取前 5 页的数据...")
+# 1. Industrial Logging Configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - [%(levelname)s] - %(message)s'
+)
 
-# 创建一个大列表，用来装所有页面的书
-all_books_data = []
+class DataExtractionEngine:
+    def __init__(self, base_url: str, total_pages: int):
+        self.base_url: Final[str] = base_url
+        self.total_pages: Final[int] = total_pages
+        self.headers: Dict[str, str] = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+        }
+        self.extracted_data: List[Dict] = []
 
-# 循环 1 到 5 页 (range(1, 6) 意思是从1开始，到6结束，不包含6)
-# 如果你想抓 50 页，就把 6 改成 51
-for page_num in range(1, 6):
-    print(f"正在抓取第 {page_num} 页...")
-    
-    # 构造每一页的网址 (注意 f-string 的用法)
-    url = f"http://books.toscrape.com/catalogue/page-{page_num}.html"
-    
-    # 发送请求
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, "html.parser")
-        books_on_page = soup.find_all("article", class_="product_pod")
+    def _fetch_page_content(self, page_num: int) -> str:
+        """Executes a GET request to the target URL with error handling."""
+        url = f"{self.base_url}/catalogue/page-{page_num}.html"
+        logging.info(f"Initiating connection to Page {page_num}...")
         
-        # 遍历这一页的每一本书
-        for book in books_on_page:
-            title = book.h3.a["title"]
-            price = book.find("p", class_="price_color").text.replace('Â', '')
+        try:
+            response = requests.get(url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+            return response.text
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Network Protocol Error on Page {page_num}: {e}")
+            return ""
+
+    def _parse_raw_data(self, html_content: str, page_num: int):
+        """Parses the DOM and extracts specific entity attributes."""
+        if not html_content:
+            return
+
+        soup = BeautifulSoup(html_content, "html.parser")
+        product_pods = soup.find_all("article", class_="product_pod")
+
+        for pod in product_pods:
+            title = pod.h3.a["title"]
+            price = pod.find("p", class_="price_color").text.replace('Â', '')
             
-            # 存入大列表
-            all_books_data.append({
-                '页码': page_num,  # 记录一下是哪一页抓的
-                '书名': title,
-                '价格': price
+            self.extracted_data.append({
+                'Origin_Page': page_num,
+                'Item_Title': title,
+                'Unit_Price': price
             })
-    else:
-        print(f"⚠️ 第 {page_num} 页连接失败！")
-    
-    # 【防封号关键】每抓完一页，休息 1 秒
-    # 告诉网站：我是人，我不是机器，我手速没那么快
-    time.sleep(1)
 
-print("-" * 30)
-print(f"✅ 抓取结束！总共抓到了 {len(all_books_data)} 本书。")
-print("正在保存到 Excel...")
+    def run_acquisition_pipeline(self):
+        """Orchestrates the full extraction workflow with throttling logic."""
+        logging.info("🚀 Data Acquisition Pipeline Started.")
+        
+        for i in range(1, self.total_pages + 1):
+            content = self._fetch_page_content(i)
+            self._parse_raw_data(content, i)
+            
+            # Implementation of Throttling (Rate Limiting) to ensure crawler persistence
+            # This simulates human browsing behavior
+            time.sleep(1.2)
 
-# 保存文件
-df = pd.DataFrame(all_books_data)
-df.to_excel('fiverr_books_all.xlsx', index=False)
+        logging.info(f"✅ Acquisition Complete. Total records identified: {len(self.extracted_data)}")
 
-print("🎉 文件 [fiverr_books_all.xlsx] 已生成！")
+    def persist_to_excel(self, filename: str = "fiverr_books_all.xlsx"):
+        """Saves the extracted dataset into a structured Excel spreadsheet."""
+        if not self.extracted_data:
+            logging.warning("No data found to persist.")
+            return
+
+        df = pd.DataFrame(self.extracted_data)
+        df.to_excel(filename, index=False)
+        logging.info(f"📂 Strategic Asset persisted at: [{filename}]")
+
+if __name__ == "__main__":
+    # Deployment Parameters
+    TARGET_SITE = "http://books.toscrape.com"
+    PAGE_COUNT = 5
+
+    # Execute Engine
+    engine = DataExtractionEngine(base_url=TARGET_SITE, total_pages=PAGE_COUNT)
+    engine.run_acquisition_pipeline()
+    engine.persist_to_excel()
