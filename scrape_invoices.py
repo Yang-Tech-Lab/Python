@@ -1,58 +1,101 @@
+"""
+FinData-Extractor Pro: Automated PDF Fiscal Intelligence Engine
+---------------------------------------------------------------
+A high-performance utility designed to parse, validate, and persist 
+structured financial data from PDF invoices using heuristic text extraction.
+
+Author: Yang Jiacheng (Yang-Tech-Lab)
+Category: Data Engineering / Business Automation
+Date: February 2026
+"""
+
 import pdfplumber
-import os
 import pandas as pd
+import logging
+from pathlib import Path
+from typing import List, Dict, Optional
 
-print("💰 发票收割机启动...")
+# 1. Industrial Logging Configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - [%(levelname)s] - %(message)s'
+)
 
-input_folder = "Invoices"
-data_list = []
-
-# 1. 遍历文件夹里所有的 PDF
-for filename in os.listdir(input_folder):
-    if filename.endswith(".pdf"):
-        file_path = os.path.join(input_folder, filename)
-        print(f"📄 正在读取: {filename}...")
+class FinanceOrchestrator:
+    def __init__(self, input_dir: str = "Invoices", output_file: str = "Fiscal_Summary_Report.xlsx"):
+        self.input_path = Path(input_dir)
+        self.output_file = output_file
+        self.registry: List[Dict] = []
         
-        # 2. 打开 PDF
-        with pdfplumber.open(file_path) as pdf:
-            # 获取第一页的文字
-            first_page = pdf.pages[0]
-            text = first_page.extract_text()
+        # Ensure the persistence layer directory exists
+        if not self.input_path.exists():
+            logging.error(f"Directory {input_dir} not found. Please verify the asset path.")
+
+    def extract_heuristic_data(self, text: str) -> Dict[str, str]:
+        """Performs targeted text segmentation to identify key financial metrics."""
+        results = {"invoice_num": "N/A", "amount": "0.0"}
+        
+        for line in text.split('\n'):
+            # Segmenting Invoice Identifier
+            if "Invoice Number:" in line:
+                results["invoice_num"] = line.split(":")[-1].strip()
             
-            # --- 核心逻辑：像切蛋糕一样提取数据 ---
-            # 我们知道数据长这样： "Total Amount: $1234.00"
-            # 所以我们要按行分析
-            
-            invoice_num = "未知"
-            amount = "0"
-            
-            for line in text.split('\n'):
-                # 抓取订单号
-                if "Invoice Number:" in line:
-                    # 把 "Invoice Number: " 替换为空，剩下的就是号码
-                    invoice_num = line.replace("Invoice Number:", "").strip()
+            # Segmenting Monetary Value
+            if "Total Amount:" in line:
+                # Sanitizing currency symbols and whitespace
+                raw_amount = line.split(":")[-1].replace("$", "").strip()
+                results["amount"] = raw_amount
                 
-                # 抓取金额
-                if "Total Amount:" in line:
-                    # 把 "Total Amount: $" 替换为空
-                    amount = line.replace("Total Amount:", "").replace("$", "").strip()
-            
-            print(f"   👉 提取成功: 单号 {invoice_num} | 金额 ${amount}")
-            
-            # 存入列表
-            data_list.append({
-                "文件名": filename,
-                "发票单号": invoice_num,
-                "总金额($)": float(amount) # 转成数字，方便算总账
-            })
+        return results
 
-# 3. 保存到 Excel
-print("-" * 30)
-df = pd.DataFrame(data_list)
+    def run_acquisition_pipeline(self):
+        """Orchestrates the full lifecycle of PDF ingestion and data parsing."""
+        logging.info("🚀 Initiating Financial Intelligence Pipeline...")
+        
+        pdf_assets = list(self.input_path.glob("*.pdf"))
+        logging.info(f"Detected {len(pdf_assets)} PDF assets for processing.")
 
-# 算个总账 (给客户的小惊喜)
-total_sum = df["总金额($)"].sum()
-print(f"💎 所有发票总额: ${total_sum:,.2f}")
+        for pdf_file in pdf_assets:
+            try:
+                with pdfplumber.open(pdf_file) as pdf:
+                    # Ingesting the primary page for metadata extraction
+                    primary_page = pdf.pages[0]
+                    content = primary_page.extract_text()
+                    
+                    if not content:
+                        logging.warning(f"Metadata missing or unreadable in: {pdf_file.name}")
+                        continue
 
-df.to_excel("Invoice_Summary_Report.xlsx", index=False)
-print("✅ 汇总报表已生成: [Invoice_Summary_Report.xlsx]")
+                    metrics = self.extract_heuristic_data(content)
+                    
+                    self.registry.append({
+                        "Source_File": pdf_file.name,
+                        "Invoice_ID": metrics["invoice_num"],
+                        "Total_USD": float(metrics["amount"])
+                    })
+                    logging.info(f"Successfully synchronized: {pdf_file.name} | Total: ${metrics['amount']}")
+
+            except Exception as e:
+                logging.error(f"Critical failure during ingestion of {pdf_file.name}: {e}")
+
+    def export_intelligence_report(self):
+        """Persists the extracted dataset into a structured Excel binary."""
+        if not self.registry:
+            logging.warning("No validated data available for persistence.")
+            return
+
+        df = pd.DataFrame(self.registry)
+        
+        # Generate fiscal insights (The 'Client Surprise' metric)
+        total_aggregate = df["Total_USD"].sum()
+        logging.info(f"💎 Cumulative Asset Valuation: ${total_aggregate:,.2f}")
+
+        df.to_excel(self.output_file, index=False)
+        logging.info(f"✅ Intelligence report persisted: [{self.output_file}]")
+
+if __name__ == "__main__":
+    # Deployment in Guangzhou Local Environment
+    #
+    engine = FinanceOrchestrator(input_dir="Invoices")
+    engine.run_acquisition_pipeline()
+    engine.export_intelligence_report()
