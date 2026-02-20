@@ -1,53 +1,94 @@
+"""
+Visual Branding Engine: Automated Asset Protection Utility
+----------------------------------------------------------
+A high-performance imaging utility designed to orchestrate batch 
+watermarking sequences with custom transparency and precise positioning.
+
+Author: Yang Jiacheng (Yang-Tech-Lab)
+Category: Computer Vision / Automation
+Date: February 2026
+"""
+
+import logging
+from pathlib import Path
+from typing import Final, Tuple
 from PIL import Image, ImageDraw, ImageFont
-import os
 
-print("🚀 批量水印工厂启动...")
+# 1. Industrial Logging Configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - [%(levelname)s] - %(message)s'
+)
 
-# --- 配置区 ---
-input_folder = "Raw_Images"   # 原图文件夹
-output_folder = "Watermarked_Images" # 处理后的文件夹
-watermark_text = "Designed by Yang"  # 水印文字
+class ImageBrandingEngine:
+    def __init__(self, input_dir: str = "Raw_Assets", output_dir: str = "Branded_Assets"):
+        self.input_path = Path(input_dir)
+        self.output_path = Path(output_dir)
+        self.brand_text: Final[str] = "Designed by Yang-Lab"
+        self._initialize_storage()
 
-# 创建输出文件夹
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
+    def _initialize_storage(self):
+        """Ensures the persistence layer (output directory) is provisioned."""
+        if not self.output_path.exists():
+            self.output_path.mkdir(parents=True)
+            logging.info(f"Initialized output repository: {self.output_path}")
 
-# --- 核心处理逻辑 ---
-file_list = os.listdir(input_folder)
+    def apply_watermark(self, image_path: Path, opacity: int = 128):
+        """
+        Synthesizes a branded asset by overlaying a semi-transparent watermark.
+        
+        :param image_path: Path to the source image.
+        :param opacity: Alpha channel value (0-255). 128 for 50% transparency.
+        """
+        try:
+            with Image.open(image_path).convert("RGBA") as base_img:
+                # Create a transparent overlay for the watermark
+                overlay = Image.new("RGBA", base_img.size, (255, 255, 255, 0))
+                draw = ImageDraw.Draw(overlay)
+                
+                # Dynamic font scaling based on asset dimensions
+                font_size = int(base_img.width / 15)
+                # Note: For professional use, load a .ttf file using ImageFont.truetype()
+                font = ImageFont.load_default() 
 
-for filename in file_list:
-    # 只处理图片文件 (jpg, png)
-    if filename.endswith(('.jpg', '.png', '.jpeg')):
-        print(f"正在处理: {filename}...")
-        
-        # 1. 打开图片
-        image_path = os.path.join(input_folder, filename)
-        img = Image.open(image_path)
-        width, height = img.size
-        
-        # 2. 准备画笔
-        draw = ImageDraw.Draw(img)
-        
-        # 3. 设置字体 (这里用默认字体，稍微大一点)
-        # 如果想用好看的字体，可以加载 .ttf 文件
-        # 这里简单处理，根据图片宽度动态计算字体大小
-        font_size = int(width / 10) 
-        font = ImageFont.load_default() 
-        
-        # 4. 计算水印位置 (放在右下角)
-        # textbbox 获取文字的宽和高 (left, top, right, bottom)
-        bbox = draw.textbbox((0, 0), watermark_text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-        
-        x = width - text_width - 10
-        y = height - text_height - 10
-        
-        # 5. 画上去！(红色水印)
-        draw.text((x, y), watermark_text, font=font, fill=(255, 0, 0))
-        
-        # 6. 保存到新文件夹
-        img.save(os.path.join(output_folder, filename))
+                # Precise coordinate calculation for Bottom-Right placement
+                bbox = draw.textbbox((0, 0), self.brand_text, font=font)
+                text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+                
+                margin = 20
+                coords = (base_img.width - text_w - margin, base_img.height - text_h - margin)
 
-print("-" * 30)
-print(f"🎉 全部搞定！请去 [{output_folder}] 文件夹查看效果！")
+                # Rendering text with alpha blending (Semi-transparent White)
+                draw.text(coords, self.brand_text, font=font, fill=(255, 255, 255, opacity))
+
+                # Composite the overlay onto the original asset
+                branded_asset = Image.alpha_composite(base_img, overlay)
+                
+                # Persist to disk (Convert back to RGB for JPEG compatibility)
+                output_file = self.output_path / image_path.name
+                branded_asset.convert("RGB").save(output_file, "JPEG", quality=95)
+                logging.info(f"Successfully branded: {image_path.name}")
+
+        except Exception as e:
+            logging.error(f"Critical failure during asset synthesis for {image_path.name}: {e}")
+
+    def execute_batch_sequence(self):
+        """Orchestrates the batch processing lifecycle for all identified assets."""
+        valid_extensions = ('.jpg', '.jpeg', '.png')
+        assets = [f for f in self.input_path.iterdir() if f.suffix.lower() in valid_extensions]
+        
+        if not assets:
+            logging.warning(f"No valid assets detected in {self.input_path}. Operation aborted.")
+            return
+
+        logging.info(f"🚀 Initiating batch branding for {len(assets)} assets...")
+        for asset in assets:
+            self.apply_watermark(asset)
+        
+        logging.info("-" * 45)
+        logging.info(f"✅ Orchestration Complete. Assets persisted at: [{self.output_path}]")
+
+if __name__ == "__main__":
+    # Deployment in Guangzhou Local Environment
+    engine = ImageBrandingEngine()
+    engine.execute_batch_sequence()
