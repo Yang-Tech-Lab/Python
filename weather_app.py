@@ -1,66 +1,128 @@
+"""
+WeatherSentinel Pro: Automated Meteorological Intelligence Dashboard
+-------------------------------------------------------------------
+A high-performance Web-UI designed to interface with global weather grids 
+and render real-time atmospheric metrics.
+
+Author: Yang Jiacheng (Yang-Tech-Lab)
+Category: Full-Stack Web Automation
+Date: February 2026
+"""
+
 import streamlit as st
 import requests
+import logging
 from datetime import datetime
+from typing import Dict, Optional, Final
 
-# --- Page Config ---
-st.set_page_config(page_title="Global Weather Radar", page_icon="🌤️")
+# 1. Industrial Configuration & Branding
+st.set_page_config(
+    page_title="WeatherSentinel Pro", 
+    page_icon="📡", 
+    layout="wide"
+)
 
-# --- Title Area ---
-st.title("🌍 Global Real-Time Weather Radar")
-st.caption("Powered by OpenWeatherMap API | Developed by Yang-Tech-Lab")
+# Professional CSS to refine UI aesthetics
+st.markdown("""
+    <style>
+    .main {
+        background-color: #0e1117;
+    }
+    .stMetric {
+        background-color: #1e1e1e;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #333;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-# --- Sidebar ---
-st.sidebar.header("⚙️ Control Panel")
-city = st.sidebar.text_input("Enter City Name (e.g., London):", "New York")
-check_btn = st.sidebar.button("🚀 Search Now")
+class WeatherEngine:
+    """Handles all geospatial data acquisition and API interactions."""
+    def __init__(self, api_key: str):
+        self.api_key: Final[str] = api_key
+        self.base_url: Final[str] = "https://api.openweathermap.org/data/2.5/weather"
 
-# --- Core Logic ---
-api_key = "103104f0c64435943e54807674a02704" # 你的 Key
-# 注意：这里去掉了 lang=zh_cn，这样 API 也会返回英文的天气描述 (e.g. Clear Sky)
-base_url = "http://api.openweathermap.org/data/2.5/weather"
-
-if check_btn:
-    with st.spinner('Connecting to satellite...'):
+    def fetch_meteorological_data(self, city: str) -> Optional[Dict]:
+        """Initiates a satellite handshake to retrieve real-time data."""
+        params = {
+            "q": city,
+            "appid": self.api_key,
+            "units": "metric",
+            "lang": "en" # Standardized for international deliverables
+        }
         try:
-            # Request Data
-            url = f"{base_url}?q={city}&appid={api_key}&units=metric"
-            response = requests.get(url)
-            
+            response = requests.get(self.base_url, params=params, timeout=12)
             if response.status_code == 200:
-                data = response.json()
-                
-                # Extract Data
-                temp = data['main']['temp']
-                feels_like = data['main']['feels_like']
-                desc = data['weather'][0]['description'].title() # 首字母大写
-                humidity = data['main']['humidity']
-                wind = data['wind']['speed']
-                icon_code = data['weather'][0]['icon']
-                
-                # --- Display Data ---
-                
-                # 1. Weather Icon (Fixed HTTPS issue)
-                icon_url = f"https://openweathermap.org/img/wn/{icon_code}@4x.png"
-                st.image(icon_url, width=100)
-                
-                # 2. Key Metrics
-                col1, col2, col3 = st.columns(3)
-                col1.metric("Temperature", f"{temp}°C", f"Feels like {feels_like}°C")
-                col2.metric("Humidity", f"{humidity}%")
-                col3.metric("Wind Speed", f"{wind} m/s")
-                
-                # 3. Status Message
-                st.success(f"Current weather in **{city}**: **{desc}**")
-                
-                # 4. Raw Data (For Geeks)
-                with st.expander("View Raw JSON Data"):
-                    st.json(data)
-                    
-            else:
-                st.error("❌ City not found! Please check the spelling.")
-                
+                return response.json()
+            return None
         except Exception as e:
-            st.error(f"Connection Error: {e}")
+            logging.error(f"Atmospheric Data Ingestion Failed: {e}")
+            return None
 
-else:
-    st.info("👈 Please enter a city name in the sidebar to start.")
+def render_dashboard():
+    """Orchestrates the UI rendering and data visualization."""
+    st.title("🛰️ Atmospheric Intelligence Interface")
+    st.caption("Global Real-Time Weather Surveillance | Powered by Yang-Tech-Lab Engine")
+
+    # --- Sidebar: Operational Control ---
+    st.sidebar.header("🕹️ Operational Controls")
+    target_city = st.sidebar.text_input("Geospatial Target (City):", "Guangzhou")
+    execute_scan = st.sidebar.button("Execute Satellite Scan")
+
+    # API Key Management (In production, use st.secrets)
+    API_KEY = "103104f0c64435943e54807674a02704"
+    engine = WeatherEngine(API_KEY)
+
+    if execute_scan:
+        with st.spinner('Initiating satellite uplink...'):
+            data = engine.fetch_meteorological_data(target_city)
+            
+            if data:
+                # 1. Coordinate & Header Section
+                lat, lon = data['coord']['lat'], data['coord']['lon']
+                st.subheader(f"📍 Target Identified: {data['name']} [{lat}, {lon}]")
+                
+                # 2. Icon & Summary
+                icon_code = data['weather'][0]['icon']
+                condition = data['weather'][0]['description'].upper()
+                col_icon, col_text = st.columns([1, 4])
+                with col_icon:
+                    st.image(f"https://openweathermap.org/img/wn/{icon_code}@4x.png")
+                with col_text:
+                    st.markdown(f"### Current Status: **{condition}**")
+                    st.info(f"Local time observation synchronized from global grid.")
+
+                # 3. High-Fidelity Metrics
+                st.divider()
+                m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+                
+                # Temperature Data
+                temp = data['main']['temp']
+                feels = data['main']['feels_like']
+                m_col1.metric("Temperature", f"{temp}°C", f"Feels like {feels}°C")
+                
+                # Humidity Analytics
+                humidity = data['main']['humidity']
+                m_col2.metric("Humidity", f"{humidity}%")
+                
+                # Velocity Vectors
+                wind_speed = data['wind']['speed']
+                m_col3.metric("Wind Velocity", f"{wind_speed} m/s")
+                
+                # Atmospheric Pressure
+                pressure = data['main']['pressure']
+                m_col4.metric("Barometric Pressure", f"{pressure} hPa")
+
+                # 4. Intelligence Payload (Raw Data)
+                st.divider()
+                with st.expander("📁 Inspect Raw Data Payload (JSON)"):
+                    st.json(data)
+            else:
+                st.error("❌ Target identification failed. Please verify the city name or network status.")
+    else:
+        st.write("---")
+        st.warning("👈 Awaiting geospatial target input to initiate scan sequence.")
+
+if __name__ == "__main__":
+    render_dashboard()
