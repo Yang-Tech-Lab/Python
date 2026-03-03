@@ -1,65 +1,114 @@
 """
-AssetSentinel Pro: Automated Crypto/Stock Threshold Monitor
------------------------------------------------------------
-A lightweight monitoring engine that tracks asset prices and triggers 
-automated alerts when thresholds are breached.
+AssetSentinel Pro: Industrial-Grade Signal Orchestrator
+------------------------------------------------------
+A high-fidelity monitoring engine designed for real-time asset 
+tracking with algorithmic alert throttling and audit persistence.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-License: MIT
+Category: Fintech Automation / Financial Intelligence
+Date: March 2026
 """
 
+import time
 import random
 import logging
-from datetime import datetime
-from typing import Final
+from datetime import datetime, timedelta
+from pathlib import Path
+from dataclasses import dataclass
+from typing import Final, Optional
 
-# Configure professional logging
+# 1. Industrial Logging Configuration
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] - %(message)s'
+    format='%(asctime)s - [%(levelname)s] - %(message)s',
+    handlers=[
+        logging.FileHandler("market_intelligence.log"),
+        logging.StreamHandler()
+    ]
 )
 
-class AssetMonitor:
-    def __init__(self, ticker: str, threshold: float):
-        self.ticker: str = ticker
-        self.threshold: float = threshold
-        self.log_file: Final[str] = "alert_history.log"
+@dataclass
+class MarketSignal:
+    ticker: str
+    price: float
+    threshold: float
+    is_breached: bool
+    timestamp: str
 
-    def fetch_market_price(self) -> float:
+class AssetSentinel:
+    def __init__(self, ticker: str, floor_price: float):
+        self.ticker: Final[str] = ticker
+        self.floor_price: Final[float] = floor_price
+        self.alert_cooldown: Final[int] = 300  # 5-minute cooldown (300s)
+        self.last_alert_time: Optional[datetime] = None
+        self.audit_trail: Final[Path] = Path("financial_audit.csv")
+        
+        self._initialize_audit_layer()
+
+    def _initialize_audit_layer(self):
+        """Ensures the persistence layer is provisioned with headers."""
+        if not self.audit_trail.exists():
+            with open(self.audit_trail, "w", encoding="utf-8") as f:
+                f.write("Timestamp,Ticker,Price,Threshold,Status\n")
+
+    def _get_market_snapshot(self) -> float:
         """
-        Simulates fetching real-time market data.
-        In production, replace with CCXT or Yahoo Finance API.
+        Simulates high-fidelity market data ingestion.
+        Replace with 'requests.get()' to Binance or Polygon.io in production.
         """
-        # Simulated volatility for BTC-style assets
-        return round(random.uniform(95000, 105000), 2)
+        # Logic: Simulated volatility around the BTC 100k psychological barrier
+        return round(random.uniform(94000, 106000), 2)
 
-    def trigger_alert(self, current_price: float):
-        """Executes alert sequence and logs critical data."""
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        alert_msg = f"CRITICAL: {self.ticker} dropped to ${current_price:,.2f} (Threshold: ${self.threshold:,.2f})"
+    def _dispatch_notification(self, signal: MarketSignal):
+        """Executes the notification protocol with throttling logic."""
+        now = datetime.now()
         
-        logging.warning(f"🚨 {alert_msg}")
-        
-        with open(self.log_file, "a", encoding="utf-8") as f:
-            f.write(f"[{timestamp}] {alert_msg}\n")
+        # Check if system is within the cooldown window
+        if self.last_alert_time and (now - self.last_alert_time).total_seconds() < self.alert_cooldown:
+            logging.info(f"⏳ Alert suppressed: Cooldown active for {self.ticker}.")
+            return
 
-    def execute_check(self):
-        """Main execution flow for price monitoring."""
-        logging.info(f"🔍 Monitoring Asset: {self.ticker}")
+        # Execute visual and file-based alert
+        logging.warning(f"🚨 SIGNAL BREACH: {signal.ticker} @ ${signal.price:,.2f} (Floor: ${signal.threshold:,.2f})")
         
-        current_price = self.fetch_market_price()
-        logging.info(f"Current Market Price: ${current_price:,.2f}")
+        with open(self.audit_trail, "a", encoding="utf-8") as f:
+            f.write(f"{signal.timestamp},{signal.ticker},{signal.price},{signal.threshold},CRITICAL\n")
+        
+        self.last_alert_time = now
 
-        if current_price < self.threshold:
-            self.trigger_alert(current_price)
+    def execute_intelligence_cycle(self):
+        """Orchestrates a single monitoring pulse."""
+        logging.info(f"🔍 Monitoring Node: {self.ticker} | Target Floor: ${self.floor_price:,.2f}")
+        
+        current_price = self._get_market_snapshot()
+        is_breached = current_price < self.floor_price
+        
+        signal = MarketSignal(
+            ticker=self.ticker,
+            price=current_price,
+            threshold=self.floor_price,
+            is_breached=is_breached,
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        if signal.is_breached:
+            self._dispatch_notification(signal)
         else:
-            logging.info("✅ Price remains within safe operational limits.")
+            logging.info(f"✅ Market Stability Confirmed: ${current_price:,.2f}")
 
 if __name__ == "__main__":
-    # Configuration: Asset Ticker and Price Floor
-    # Example: BTC-USD with a $98,000 alert floor
-    monitor = AssetMonitor(ticker="BTC-USD", threshold=98000.00)
+    # Standard Operating Procedure (SOP)
+    # Example: BTC price floor at $98,500
+    sentinel = AssetSentinel(ticker="BTC-USD", floor_price=98500.00)
     
-    print("--- Sentinel Protocol Initiated ---")
-    monitor.execute_check()
-    print("--- Session Complete ---")
+    print("\n--- Sentinel Core: Monitoring Sequence Online ---")
+    try:
+        # Running a simulated 5-cycle scan
+        for cycle in range(1, 6):
+            logging.info(f"Cycle {cycle}/5 in progress...")
+            sentinel.execute_intelligence_cycle()
+            time.sleep(1.5)  # Scan frequency throttling
+    except KeyboardInterrupt:
+        logging.info("System manually decommissioned.")
+    
+    print("--- Session Persisted to Audit Trail ---")
