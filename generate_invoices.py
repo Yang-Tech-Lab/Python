@@ -1,107 +1,142 @@
 """
-FinDoc Architect: Professional Invoice Synthesis Engine
--------------------------------------------------------
-A high-performance utility designed to generate legally-structured 
-PDF invoices for enterprise-level service verification and testing.
+FinDoc-Architect Pro: Enterprise-Grade Invoice Synthesis
+---------------------------------------------------------
+A high-fidelity document orchestration engine utilizing the Platypus 
+framework for automated, styled, and structurally-validated fiscal reports.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Business Process Automation / Fintech
-Date: February 2026
+Date: March 2026
 """
 
-import os
-import random
 import logging
 from datetime import datetime
-from typing import List, Final
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import LETTER
+from pathlib import Path
+from typing import List, Dict, Final, Any
 
-# 1. Professional Logging Configuration
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import LETTER
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
+# 1. Industrial Logging Configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - [%(levelname)s] - %(message)s'
 )
 
-class InvoiceGenerator:
-    def __init__(self, output_dir: str = "Financial_Vault"):
-        self.output_dir: Final[str] = output_dir
-        self.provider: Final[str] = "Yang Jiacheng (Full-Stack Engineer)"
-        self._initialize_vault()
+class InvoiceArchitect:
+    def __init__(self, vault_dir: str = "Vault/Invoices"):
+        self.vault_path = Path(vault_dir)
+        self.provider_id: Final[str] = "Yang Jiacheng (Yang-Tech-Lab)"
+        self.styles = getSampleStyleSheet()
+        self._bootstrap_vault()
 
-    def _initialize_vault(self):
-        """Ensures the secure persistence layer (directory) is initialized."""
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-            logging.info(f"Financial Vault initialized at: {self.output_dir}")
+    def _bootstrap_vault(self):
+        """Provisions the secure persistence layer for document storage."""
+        self.vault_path.mkdir(parents=True, exist_ok=True)
+        logging.info(f"🚀 Fiscal Intelligence Vault secured at: {self.vault_path.resolve()}")
 
-    def generate_synthetic_invoice(self, client: str, index: int):
-        """Generates a structured PDF invoice with randomized fiscal data."""
-        # Strategic data generation
-        amount = random.randint(1500, 12000)
-        invoice_id = f"INV-{datetime.now().year}-{500 + index}"
-        file_path = os.path.join(self.output_dir, f"Invoice_{client.replace(' ', '_')}.pdf")
+    def _create_custom_styles(self):
+        """Defines professional typography standards for the document."""
+        self.styles.add(ParagraphStyle(
+            name='EnterpriseHeader',
+            fontSize=26,
+            textColor=colors.HexColor("#2C3E50"),
+            spaceAfter=20,
+            fontName='Helvetica-Bold'
+        ))
+        self.styles.add(ParagraphStyle(
+            name='FinancialMetric',
+            fontSize=12,
+            textColor=colors.HexColor("#27AE60"),
+            fontName='Helvetica-Bold'
+        ))
+
+    def synthesize_invoice(self, client: str, items: List[List[Any]]):
+        """
+        Orchestrates the synthesis of a structured PDF invoice.
         
-        logging.info(f"Compiling fiscal record for: {client} | Target: {file_path}")
+        :param client: Legal entity name of the recipient.
+        :param items: List of service line items [Description, Hours/Qty, Rate, Subtotal]
+        """
+        self._create_custom_styles()
+        file_name = f"MSA_Invoice_{client.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        target_file = self.vault_path / file_name
+        
+        logging.info(f"Initiating document synthesis for node: {client}")
 
+        # Document Template Setup
+        doc = SimpleDocTemplate(str(target_file), pagesize=LETTER)
+        story = [] # Elements buffer
+
+        # --- Section 1: Branding & Header ---
+        story.append(Paragraph("TAX INVOICE", self.styles['EnterpriseHeader']))
+        story.append(Paragraph(f"<b>Provider:</b> {self.provider_id}", self.styles['Normal']))
+        story.append(Paragraph(f"<b>Recipient:</b> {client}", self.styles['Normal']))
+        story.append(Paragraph(f"<b>Date:</b> {datetime.now().strftime('%B %d, %Y')}", self.styles['Normal']))
+        story.append(Spacer(1, 0.3 * inch))
+
+        # --- Section 2: Line Item Orchestration (Table) ---
+        # Data Header
+        data = [['Service Description', 'Quantity', 'Unit Rate', 'Amount (USD)']]
+        total_sum = 0
+        
+        for item in items:
+            data.append(item)
+            total_sum += item[3]
+
+        # Table Styling Logic
+        # 
+        item_table = Table(data, colWidths=[3.5*inch, 0.8*inch, 1.2*inch, 1.2*inch])
+        item_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#34495E")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 1), (0, -1), 'LEFT'), # Description left-aligned
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#FBFCFC")),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        story.append(item_table)
+        story.append(Spacer(1, 0.2 * inch))
+
+        # --- Section 3: Financial Summary ---
+        summary_text = f"TOTAL REMUNERATION DUE: ${total_sum:,.2f} USD"
+        story.append(Paragraph(summary_text, self.styles['FinancialMetric']))
+        
+        # --- Section 4: Legal & System Footer ---
+        story.append(Spacer(1, 2 * inch))
+        footer_style = ParagraphStyle(name='Footer', fontSize=8, textColor=colors.grey, alignment=1)
+        story.append(Paragraph("System-generated financial record. Digital audit trail active.", footer_style))
+        story.append(Paragraph(f"Generated by {self.provider_id} @ {datetime.now()}", footer_style))
+
+        # Build Final Asset
         try:
-            # Document Canvas Initialization
-            c = canvas.Canvas(file_path, pagesize=LETTER)
-            
-            # --- Visual Identity Section ---
-            c.setFont("Helvetica-Bold", 24)
-            c.setStrokeColorRGB(0.2, 0.2, 0.2)
-            c.drawString(50, 750, "TAX INVOICE")
-            
-            # --- Entity Details ---
-            c.setFont("Helvetica", 11)
-            c.drawString(50, 720, f"Issued by: {self.provider}")
-            c.drawString(50, 705, f"Recipient: {client}")
-            c.drawString(50, 690, f"Date of Issue: {datetime.now().strftime('%B %d, %Y')}")
-            
-            # Horizontal Separator
-            c.line(50, 675, 550, 675)
-            
-            # --- Service Description & Financials ---
-            c.setFont("Helvetica-Bold", 12)
-            c.drawString(50, 650, "Description of Services:")
-            
-            c.setFont("Helvetica", 11)
-            c.drawString(70, 630, "• Full-Stack Software & Hardware Integration (IoT)")
-            c.drawString(70, 615, "• Automated Workflow Development (Python/Selenium)")
-            
-            # Critical Data Points
-            c.setFont("Helvetica-Bold", 12)
-            c.drawString(50, 570, f"Invoice Reference: {invoice_id}")
-            
-            # Highlighted Remuneration
-            c.setFillColorRGB(0.15, 0.68, 0.37) # Professional Emerald Green
-            c.drawString(50, 550, f"Total Amount Due: ${amount:,.2f} USD")
-            
-            # --- Footer & Signature ---
-            c.setFillColorRGB(0, 0, 0)
-            c.setFont("Helvetica-Oblique", 10)
-            c.drawString(50, 100, "Note: This is a synthetically generated document for system verification.")
-            
-            c.save()
-            logging.info(f"Successfully persisted invoice: {invoice_id}")
-            
+            doc.build(story)
+            logging.info(f"✅ Strategic asset persisted: {target_file.name}")
         except Exception as e:
-            logging.error(f"Critical failure during document compilation for {client}: {e}")
-
-    def process_client_registry(self, clients: List[str]):
-        """Executes a batch generation sequence for a list of corporate entities."""
-        logging.info(f"Initiating batch sequence for {len(clients)} entities...")
-        for i, client in enumerate(clients):
-            self.generate_synthetic_invoice(client, i)
-        logging.info("Batch generation sequence finalized.")
+            logging.error(f"❌ Synthesis Failure: {e}")
 
 if __name__ == "__main__":
-    # Enterprise-level Mock Data (Reflecting your interest in tech giants)
+    # Deployment in High-Value Tech Nodes
     #
-    corporate_partners = ["SpaceX", "Tesla Motors", "NVIDIA Corp", "Neuralink", "Apple Inc"]
+    engine = InvoiceArchitect()
     
-    print("--- FinDoc Architect Engine Online ---")
-    engine = InvoiceGenerator()
-    engine.process_client_registry(corporate_partners)
-    print("--- Session Terminated ---")
+    # Mock Project Data for Synthesis
+    projects = [
+        ["Automated PCB DFM Validation Script (KiCad 9.0 API)", 1, 2500, 2500],
+        ["ESP32 IoT Sensor Network Architecture", 40, 150, 6000],
+        ["Selenium-driven Market Intelligence Engine", 1, 1200, 1200]
+    ]
+    
+    print("\n" + "="*55)
+    print("      YANG-TECH-LAB: FISCAL ARCHITECT ONLINE")
+    print("="*55 + "\n")
+    
+    engine.synthesize_invoice(client="SpaceX (Starlink Division)", items=projects)
+    print("\n--- Session Concluded: All Assets Synchronized ---")
