@@ -1,19 +1,21 @@
- """
-Interactive Insight Engine: Executive Sales Dashboard
------------------------------------------------------
-A high-performance visualization suite that converts transactional data 
-into a dynamic, web-based Business Intelligence (BI) dashboard.
+"""
+InsightEngine Pro: High-Fidelity BI Orchestration Suite
+-------------------------------------------------------
+An advanced data visualization engine that transforms transactional 
+datasets into multi-dimensional, web-based intelligence platforms.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Full-Stack Data Visualization
-Date: February 2026
+Category: Full-Stack Data Engineering
+Date: March 2026
 """
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import logging
 import sys
-from typing import Final
+from pathlib import Path
+from typing import Final, Optional
 
 # 1. Industrial Logging Configuration
 logging.basicConfig(
@@ -22,61 +24,84 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
-# Configuration Constants
-SOURCE_FILE: Final[str] = 'fiverr_report_finished.xlsx'
-OUTPUT_DASHBOARD: Final[str] = 'interactive_business_intelligence.html'
+class IntelligenceOrchestrator:
+    def __init__(self, source_name: str = 'fiverr_report_finished.xlsx'):
+        self.source_path: Final[Path] = Path(source_name)
+        self.output_path: Final[Path] = Path('Vault/Executive_Dashboard_2026.html')
+        self.theme: Final[str] = 'plotly_dark'
+        self._bootstrap_environment()
 
-class DashboardEngine:
-    def __init__(self, data_path: str):
-        self.data_path = data_path
-        self.theme = 'plotly_dark'  # High-tech aesthetic for professional engineering reports
+    def _bootstrap_environment(self):
+        """Ensures the local persistence layer is provisioned."""
+        self.output_path.parent.mkdir(parents=True, exist_ok=True)
+        logging.info("🛠️ Orchestration environment synchronized.")
 
-    def ingest_data(self) -> pd.DataFrame:
-        """Loads and validates the transaction dataset."""
-        logging.info(f"Ingesting data from: {self.data_path}")
+    def ingest_market_data(self) -> pd.DataFrame:
+        """Loads and validates categorical transaction data."""
+        logging.info(f"Ingesting raw data payload from: {self.source_path}")
         try:
-            return pd.read_excel(self.data_path)
-        except FileNotFoundError:
-            logging.error(f"Critical Error: Source file '{self.data_path}' not found.")
+            df = pd.read_excel(self.source_path)
+            # Data Cleaning: Ensure numeric types for financial metrics
+            df['销售总额'] = pd.to_numeric(df['销售总额'], errors='coerce').fillna(0)
+            return df
+        except Exception as e:
+            logging.error(f"❌ Critical Ingestion Failure: {e}")
             sys.exit(1)
 
-    def compile_dashboard(self):
-        """Orchestrates the visualization rendering and persistence sequence."""
-        df = self. ingest_data()
-        
-        logging.info("Initializing Plotly rendering engine...")
-        
-        # 2. Interactive Bar Chart Architecture
-        # Translating Chinese headers to standard English business metrics
-        fig = px.bar(
-            df, 
-            x='产品名称', 
-            y='销售总额',
+    def synthesize_visual_intelligence(self, df: pd.DataFrame) -> go.Figure:
+        """Orchestrates the rendering of a multi-dimensional bar-treemap hybrid."""
+        logging.info("Synthesizing interactive visual assets...")
+
+        # 2. Advanced Multi-dimensional Visualization
+        # Using a Treemap to show 'Market Share' alongside the Bar Chart
+        fig = px.treemap(
+            df,
+            path=[px.Constant("Total Portfolio"), '产品名称'],
+            values='销售总额',
             color='销售总额',
-            color_continuous_scale=px.colors.sequential.Viridis,
-            title='Executive Sales Performance Analytics',
-            labels={'产品名称': 'Product Category', '销售总额': 'Revenue (USD)'},
-            text_auto='.2s',
+            color_continuous_scale='Viridis',
+            title='Executive Market Share & Revenue Analysis',
+            hover_data=['销售总额'],
             template=self.theme
         )
 
-        # 3. Fine-tuning Layout for Enterprise Standards
+        # 3. Fine-tuning UX & Brand Identity
         fig.update_layout(
-            title_font_size=24,
-            title_x=0.5, # Center the title
-            xaxis_tickangle=-45,
-            font=dict(family="Courier New, monospace", size=14, color="white"),
-            margin=dict(l=50, r=50, t=100, b=100),
-            paper_bgcolor="#1e1e1e", # Deep charcoal for a premium feel
-            plot_bgcolor="#1e1e1e"
+            title_font_size=28,
+            title_x=0.5,
+            font=dict(family="Inter, sans-serif", size=14),
+            paper_bgcolor="#111111", # Ultra-dark tech aesthetic
+            plot_bgcolor="#111111",
+            margin=dict(t=100, b=50, l=50, r=50)
+        )
+        
+        # Adding 'Strategic Annotations'
+        fig.add_annotation(
+            text="Yang-Tech-Lab Intelligence Engine | 2026 Edition",
+            xref="paper", yref="paper",
+            x=1, y=-0.1, showarrow=False,
+            font=dict(size=10, color="gray")
         )
 
-        # 4. Persistence Layer
-        logging.info(f"Exporting dynamic assets to: {OUTPUT_DASHBOARD}")
-        fig.write_html(OUTPUT_DASHBOARD)
-        logging.info("✅ Operation Successful. BI Dashboard is live.")
+        return fig
+
+    def deploy_dashboard(self):
+        """Finalizes and persists the interactive intelligence asset."""
+        data = self.ingest_market_data()
+        figure = self.synthesize_visual_intelligence(data)
+        
+        logging.info(f"Persisting dynamic asset to: {self.output_path}")
+        figure.write_html(
+            str(self.output_path),
+            include_plotlyjs='cdn', # Keeps file size small
+            full_html=True
+        )
+        logging.info("🏆 Mission Accomplished. Intelligence Platform is live.")
 
 if __name__ == "__main__":
-    print("🚀 AssetSentinel: Interactive Insight Engine Online")
-    engine = DashboardEngine(SOURCE_FILE)
-    engine.compile_dashboard()
+    print("\n" + "="*55)
+    print("      YANG-TECH-LAB: INSIGHT ENGINE ONLINE")
+    print("="*55 + "\n")
+    
+    orchestrator = IntelligenceOrchestrator()
+    orchestrator.deploy_dashboard()
