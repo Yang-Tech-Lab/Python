@@ -1,83 +1,136 @@
 """
-PDF-Orchestrator Pro: Automated Document Synthesis & Merging Engine
--------------------------------------------------------------------
-A high-performance utility designed to synthesize, aggregate, and 
-persist multi-page PDF documents for enterprise workflows.
+DocuSync Pro: Industrial-Grade PDF Orchestration Suite
+------------------------------------------------------
+A high-performance engine leveraging modern asynchronous-ready logic 
+to synthesize, merge, and inject metadata into multi-stage PDF assets.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Business Process Automation / Document Engineering
-Date: February 2026
+Category: Document Engineering / RPA
+Date: March 2026
 """
 
 import logging
 from pathlib import Path
-from typing import List, Final
-from PyPDF2 import PdfWriter
+from datetime import datetime
+from typing import List, Final, Optional, Union
+from pypdf import PdfWriter, PdfReader
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
 
-# 1. Professional Logging Configuration
+# 1. Industrial Logging Configuration
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] - %(message)s'
+    format='%(asctime)s - [%(levelname)s] - %(message)s',
+    handlers=[
+        logging.FileHandler("document_orchestration.log"),
+        logging.StreamHandler()
+    ]
 )
 
-class PDFOrchestrator:
-    def __init__(self, output_name: str = "Merged_Document_Final.pdf"):
-        self.output_name: Final[str] = output_name
-        self.payload_registry: List[Path] = []
-        logging.info("🚀 PDF-Orchestrator Engine Initialized.")
+class DocuSyncOrchestrator:
+    def __init__(self, output_filename: str = "Final_Synchronized_Asset.pdf"):
+        self.output_path: Final[Path] = Path("Vault/Exports") / output_filename
+        self.asset_registry: List[Path] = []
+        self.author: Final[str] = "Yang Jiacheng (Yang-Tech-Lab)"
+        self._bootstrap_environment()
 
-    def generate_mock_payload(self, filename: str, content: str):
-        """Synthesizes a mock PDF document for system verification."""
-        file_path = Path(filename)
+    def _bootstrap_environment(self):
+        """Provisions the secure export vault."""
+        self.output_path.parent.mkdir(parents=True, exist_ok=True)
+        logging.info("🛠️ Document vault synchronized. Ready for synthesis.")
+
+    def synthesize_test_payload(self, identifier: str, technical_summary: str):
+        """Generates a high-fidelity synthetic PDF for hardware/software verification."""
+        temp_file = Path(f"temp_{identifier.replace(' ', '_')}.pdf")
+        logging.info(f"Synthesizing strategic asset: {temp_file.name}")
+        
         try:
-            c = canvas.Canvas(str(file_path))
-            c.setFont("Helvetica-Bold", 16)
-            c.drawString(100, 750, "SYSTEM GENERATED PAYLOAD")
-            c.setFont("Helvetica", 12)
-            c.drawString(100, 720, f"Content: {content}")
+            c = canvas.Canvas(str(temp_file), pagesize=A4)
+            # --- Branding & Metadata ---
+            c.setFont("Helvetica-Bold", 18)
+            c.setStrokeColorRGB(0.1, 0.3, 0.5)
+            c.drawString(50, 800, "Yang-Tech-Lab: Automated Technical Dispatch")
+            
+            # --- Body Content ---
+            c.setFont("Helvetica", 11)
+            c.drawString(50, 770, f"Synchronization Pulse: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            c.drawString(50, 755, f"Asset ID: {identifier}")
+            
+            # Simulated Technical Data Box
+            c.rect(50, 680, 500, 60, stroke=1, fill=0)
+            c.setFont("Helvetica-Oblique", 10)
+            c.drawString(60, 715, "Payload Description:")
+            c.setFont("Helvetica", 11)
+            c.drawString(60, 695, technical_summary)
+            
             c.save()
-            self.payload_registry.append(file_path)
-            logging.info(f"📄 Synthetic asset generated: {filename}")
+            self.asset_registry.append(temp_file)
         except Exception as e:
-            logging.error(f"❌ Failed to generate synthetic asset: {e}")
+            logging.error(f"❌ Synthesis failure: {e}")
 
-    def execute_merge_sequence(self):
-        """Orchestrates the aggregation of multiple PDF assets into a unified file."""
-        if not self.payload_registry:
-            logging.warning("⚠️ No assets detected in the registry. Aborting sequence.")
+    def merge_and_inject_metadata(self):
+        """
+        Orchestrates the merging sequence and injects professional 
+        XMP-compliant metadata for enterprise indexing.
+        """
+        if not self.asset_registry:
+            logging.warning("No assets identified in the registry. Execution aborted.")
             return
 
-        logging.info(f"🔗 Initiating merge sequence for {len(self.payload_registry)} assets...")
+        logging.info(f"🚀 Initiating merge sequence for {len(self.asset_registry)} nodes...")
         writer = PdfWriter()
 
         try:
-            for pdf_path in self.payload_registry:
-                writer.append(str(pdf_path))
-                logging.info(f"➕ Appended: {pdf_path.name}")
+            for asset_path in self.asset_registry:
+                if asset_path.exists():
+                    writer.append(asset_path)
+                    logging.info(f"   ➕ Integrated: {asset_path.name}")
 
-            # Persistence Layer
-            with open(self.output_name, "wb") as output_file:
-                writer.write(output_file)
+            # --- Industrial Metadata Injection ---
+            metadata = {
+                "/Author": self.author,
+                "/Creator": "DocuSync-Orchestrator Pro (Python 3.12)",
+                "/Producer": "Yang-Tech-Lab Automation Suite",
+                "/Subject": "Integrated Technical Documentation",
+                "/Title": self.output_path.stem.replace("_", " ")
+            }
+            writer.add_metadata(metadata)
+
+            # --- Persistence Layer ---
+            with open(self.output_path, "wb") as f:
+                writer.write(f)
             
-            logging.info(f"✅ Orchestration Complete. Final asset persisted at: [{self.output_name}]")
+            logging.info(f"🏆 Mission Accomplished. Persistent asset: {self.output_path.resolve()}")
+            
+            # Auto-cleanup of intermediate payloads
+            self._cleanup_temp_assets()
+
         except Exception as e:
-            logging.error(f"❌ Critical failure during merge sequence: {e}")
-        finally:
-            writer.close()
+            logging.error(f"❌ Critical Orchestration Failure: {e}")
+
+    def _cleanup_temp_assets(self):
+        """Purges temporary synthetic assets post-synthesis."""
+        for asset in self.asset_registry:
+            try:
+                asset.unlink()
+                logging.info(f"🗑️ Purged intermediate asset: {asset.name}")
+            except Exception as e:
+                logging.error(f"Cleanup failure for {asset}: {e}")
+        self.asset_registry = []
 
 if __name__ == "__main__":
-    # Initialize the Orchestrator
-    orchestrator = PDFOrchestrator(output_name="Integrated_Service_Agreement.pdf")
-
-    # 1. Generate Synthetic Assets (Mock Data)
-    orchestrator.generate_mock_payload("Part_1_Header.pdf", "Section A: Contractual Parties & Terms")
-    orchestrator.generate_mock_payload("Part_2_Details.pdf", "Section B: Scope of Work & Deliverables")
-
-    # 2. Execute Merging Logic
-    print("-" * 45)
-    orchestrator.execute_merge_sequence()
-    print("-" * 45)
+    # Deployment in High-Value Automation Scenarios
+    print("\n" + "="*55)
+    print("      YANG-TECH-LAB: DOCUSYNC ORCHESTRATOR PRO")
+    print("="*55 + "\n")
     
-    # 3. Cleanup simulation (Optional: In production, assets might be deleted after merging)
-    # [Path(f).unlink() for f in ["Part_1_Header.pdf", "Part_2_Details.pdf"]]
+    orchestrator = DocuSyncOrchestrator(output_filename="Combined_PCB_Hardware_Report.pdf")
+
+    # 1. Synthesize payloads (e.g., merging KiCad BoM + Test Logs)
+    orchestrator.synthesize_test_payload("KiCad_BOM_Module", "Bill of Materials for STM32 Controller v1.2")
+    orchestrator.synthesize_test_payload("Oscilloscope_Pulse", "PWM Signal Analysis - V_Peak: 3.31V, Frequency: 1.02kHz")
+
+    # 2. Execute Orchestration
+    print("-" * 55)
+    orchestrator.merge_and_inject_metadata()
+    print("-" * 55)
