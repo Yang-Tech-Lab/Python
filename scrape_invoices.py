@@ -1,101 +1,142 @@
 """
-FinData-Extractor Pro: Automated PDF Fiscal Intelligence Engine
----------------------------------------------------------------
-A high-performance utility designed to parse, validate, and persist 
-structured financial data from PDF invoices using heuristic text extraction.
+FiscalIntelligence Orchestrator: Professional PDF Ingestion Engine
+------------------------------------------------------------------
+An industrial-grade utility designed to orchestrate the ingestion, 
+regex-based extraction, and persistence of fiscal metrics from PDF assets.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Data Engineering / Business Automation
-Date: February 2026
+Category: Data Engineering / Financial Automation
+Date: March 2026
 """
 
-import pdfplumber
-import pandas as pd
+import re
 import logging
+import pandas as pd
+import pdfplumber
 from pathlib import Path
-from typing import List, Dict, Optional
+from datetime import datetime
+from typing import List, Dict, Optional, Final, Any
 
 # 1. Industrial Logging Configuration
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] - %(message)s'
+    format='%(asctime)s - [%(levelname)s] - %(message)s',
+    handlers=[
+        logging.FileHandler("fiscal_ingestion_audit.log"),
+        logging.StreamHandler()
+    ]
 )
 
-class FinanceOrchestrator:
-    def __init__(self, input_dir: str = "Invoices", output_file: str = "Fiscal_Summary_Report.xlsx"):
-        self.input_path = Path(input_dir)
-        self.output_file = output_file
-        self.registry: List[Dict] = []
+class FiscalOrchestrator:
+    def __init__(self, vault_dir: str = "Vault/Invoices"):
+        self.vault_path: Final[Path] = Path(vault_dir)
+        self.output_path: Final[Path] = Path("Vault/Exports/Strategic_Fiscal_Summary.xlsx")
+        self.registry: List[Dict[str, Any]] = []
         
-        # Ensure the persistence layer directory exists
-        if not self.input_path.exists():
-            logging.error(f"Directory {input_dir} not found. Please verify the asset path.")
+        # Professional Metadata
+        self.provider_id: Final[str] = "Yang-Tech-Lab Execution Engine"
+        self._bootstrap_vault()
 
-    def extract_heuristic_data(self, text: str) -> Dict[str, str]:
-        """Performs targeted text segmentation to identify key financial metrics."""
-        results = {"invoice_num": "N/A", "amount": "0.0"}
+    def _bootstrap_vault(self):
+        """Provisions the secure local persistence layers."""
+        self.vault_path.mkdir(parents=True, exist_ok=True)
+        self.output_path.parent.mkdir(parents=True, exist_ok=True)
+        logging.info(f"🛠️ Orchestration environment synchronized at: {self.vault_path.resolve()}")
+
+    def _extract_deterministic_metrics(self, text: str) -> Dict[str, Optional[str]]:
+        """
+        Executes heuristic pattern matching using Regular Expressions (Regex).
+        This ensures higher resilience against formatting variations.
+        """
+        # Logic: Pattern matching for common invoice schemas
+        patterns = {
+            "invoice_id": r"Invoice\s*Number:\s*(\w+)",
+            "total_amount": r"Total\s*Amount:\s*\$?([\d,]+\.\d{2})",
+            "date": r"Date:\s*([\w\s,]+)"
+        }
         
-        for line in text.split('\n'):
-            # Segmenting Invoice Identifier
-            if "Invoice Number:" in line:
-                results["invoice_num"] = line.split(":")[-1].strip()
+        extracted = {}
+        for key, pattern in patterns.items():
+            match = re.search(pattern, text, re.IGNORECASE)
+            extracted[key] = match.group(1).replace(",", "") if match else None
             
-            # Segmenting Monetary Value
-            if "Total Amount:" in line:
-                # Sanitizing currency symbols and whitespace
-                raw_amount = line.split(":")[-1].replace("$", "").strip()
-                results["amount"] = raw_amount
-                
-        return results
+        return extracted
 
-    def run_acquisition_pipeline(self):
-        """Orchestrates the full lifecycle of PDF ingestion and data parsing."""
-        logging.info("🚀 Initiating Financial Intelligence Pipeline...")
+    def execute_ingestion_pipeline(self):
+        """Orchestrates the full lifecycle of PDF data acquisition."""
+        logging.info("🚀 Initiating Deterministic Ingestion Sequence...")
         
-        pdf_assets = list(self.input_path.glob("*.pdf"))
-        logging.info(f"Detected {len(pdf_assets)} PDF assets for processing.")
+        pdf_assets = list(self.vault_path.glob("*.pdf"))
+        if not pdf_assets:
+            logging.warning("⚠️ No PDF assets identified in the vault. System standing by.")
+            return
 
-        for pdf_file in pdf_assets:
+        for pdf_asset in pdf_assets:
             try:
-                with pdfplumber.open(pdf_file) as pdf:
-                    # Ingesting the primary page for metadata extraction
-                    primary_page = pdf.pages[0]
-                    content = primary_page.extract_text()
+                with pdfplumber.open(pdf_asset) as pdf:
+                    # Ingesting Primary Payload (First Page)
+                    content = pdf.pages[0].extract_text()
                     
                     if not content:
-                        logging.warning(f"Metadata missing or unreadable in: {pdf_file.name}")
+                        logging.warning(f"Metadata Breach: Page content unreadable in {pdf_asset.name}")
                         continue
 
-                    metrics = self.extract_heuristic_data(content)
+                    metrics = self._extract_deterministic_metrics(content)
+                    
+                    # Data Transformation & Integrity Check
+                    amount_val = float(metrics.get("total_amount") or 0.0)
                     
                     self.registry.append({
-                        "Source_File": pdf_file.name,
-                        "Invoice_ID": metrics["invoice_num"],
-                        "Total_USD": float(metrics["amount"])
+                        "Sync_Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "Source_Asset": pdf_asset.name,
+                        "Invoice_Identifier": metrics.get("invoice_id") or "UNKNOWN",
+                        "Valuation_USD": amount_val,
+                        "Document_Status": "VERIFIED" if amount_val > 0 else "FLAGGED"
                     })
-                    logging.info(f"Successfully synchronized: {pdf_file.name} | Total: ${metrics['amount']}")
+                    logging.info(f"   ✅ Node Synchronized: {pdf_asset.name} | Metric: ${amount_val:,.2f}")
 
             except Exception as e:
-                logging.error(f"Critical failure during ingestion of {pdf_file.name}: {e}")
+                logging.error(f"❌ Ingestion Fault in {pdf_asset.name}: {e}")
 
-    def export_intelligence_report(self):
-        """Persists the extracted dataset into a structured Excel binary."""
+    def persist_to_vault(self):
+        """Persists the acquired intelligence into a structured Excel binary."""
         if not self.registry:
-            logging.warning("No validated data available for persistence.")
             return
 
         df = pd.DataFrame(self.registry)
         
-        # Generate fiscal insights (The 'Client Surprise' metric)
-        total_aggregate = df["Total_USD"].sum()
-        logging.info(f"💎 Cumulative Asset Valuation: ${total_aggregate:,.2f}")
+        # Strategic Intelligence Calculation
+        # Formula: $$Total\_Exposure = \sum_{i=1}^{n} Invoice\_Amount_i$$
+        total_aggregate = df["Valuation_USD"].sum()
+        logging.info(f"💎 Cumulative Fiscal Ingestion: ${total_aggregate:,.2f}")
 
-        df.to_excel(self.output_file, index=False)
-        logging.info(f"✅ Intelligence report persisted: [{self.output_file}]")
+        try:
+            # Professional Formatting Layer (XlsxWriter)
+            with pd.ExcelWriter(self.output_path, engine='xlsxwriter') as writer:
+                df.to_excel(writer, index=False, sheet_name='Fiscal_Intelligence')
+                
+                workbook = writer.book
+                worksheet = writer.sheets['Fiscal_Intelligence']
+                
+                # Apply high-end aesthetic styles
+                header_fmt = workbook.add_format({'bold': True, 'bg_color': '#2C3E50', 'font_color': 'white', 'border': 1})
+                currency_fmt = workbook.add_format({'num_format': '$#,##0.00'})
+                
+                for col_num, value in enumerate(df.columns.values):
+                    worksheet.write(0, col_num, value, header_fmt)
+                    worksheet.set_column(col_num, col_num, 18)
+                
+                worksheet.set_column('D:D', 18, currency_fmt) # Column D: Valuation_USD
+
+            logging.info(f"🏆 Strategic report deployed to secure vault: {self.output_path}")
+        except Exception as e:
+            logging.error(f"Persistence Layer Failure: {e}")
 
 if __name__ == "__main__":
-    # Deployment in Guangzhou Local Environment
-    #
-    engine = FinanceOrchestrator(input_dir="Invoices")
-    engine.run_acquisition_pipeline()
-    engine.export_intelligence_report()
+    print("\n" + "="*55)
+    print("      YANG-TECH-LAB: FISCAL INTELLIGENCE CORE")
+    print("="*55 + "\n")
+    
+    orchestrator = FiscalOrchestrator(vault_dir="Invoices")
+    orchestrator.execute_ingestion_pipeline()
+    orchestrator.persist_to_vault()
