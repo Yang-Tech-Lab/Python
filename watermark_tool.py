@@ -1,94 +1,114 @@
 """
-Visual Branding Engine: Automated Asset Protection Utility
-----------------------------------------------------------
-A high-performance imaging utility designed to orchestrate batch 
-watermarking sequences with custom transparency and precise positioning.
+VisionOrchestrator Pro: Advanced Visual Branding Engine
+--------------------------------------------------------
+A high-performance orchestration suite designed for multi-threaded 
+asset protection, featuring dynamic font scaling and alpha-blending.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Computer Vision / Automation
-Date: February 2026
+Date: March 20, 2026
 """
 
 import logging
 from pathlib import Path
-from typing import Final, Tuple
-from PIL import Image, ImageDraw, ImageFont
+from concurrent.futures import ProcessPoolExecutor
+from typing import Final, Tuple, Optional
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 # 1. Industrial Logging Configuration
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] - %(message)s'
+    format='%(asctime)s - [%(levelname)s] - %(message)s',
+    handlers=[logging.FileHandler("branding_audit.log"), logging.StreamHandler()]
 )
 
-class ImageBrandingEngine:
-    def __init__(self, input_dir: str = "Raw_Assets", output_dir: str = "Branded_Assets"):
-        self.input_path = Path(input_dir)
-        self.output_path = Path(output_dir)
-        self.brand_text: Final[str] = "Designed by Yang-Lab"
-        self._initialize_storage()
+class BrandingOrchestrator:
+    def __init__(self, input_vault: str = "Raw_Assets", output_vault: str = "Branded_Assets"):
+        self.input_path: Final[Path] = Path(input_vault)
+        self.output_path: Final[Path] = Path(output_vault)
+        self.brand_id: Final[str] = "© 2026 YANG-TECH-LAB"
+        self._bootstrap_environment()
 
-    def _initialize_storage(self):
-        """Ensures the persistence layer (output directory) is provisioned."""
-        if not self.output_path.exists():
-            self.output_path.mkdir(parents=True)
-            logging.info(f"Initialized output repository: {self.output_path}")
+    def _bootstrap_environment(self):
+        """Provisions the local persistence layer for asset storage."""
+        self.output_path.mkdir(parents=True, exist_ok=True)
+        logging.info(f"🚀 Branding environment synchronized at: {self.output_path.resolve()}")
 
-    def apply_watermark(self, image_path: Path, opacity: int = 128):
+    def _calculate_safe_zone(self, base_size: Tuple[int, int], text_size: Tuple[int, int]) -> Tuple[int, int]:
+        """Computes precise coordinates for Bottom-Right placement with a 5% margin."""
+        width, height = base_size
+        t_width, t_height = text_size
+        margin_x = int(width * 0.05)
+        margin_y = int(height * 0.05)
+        return (width - t_width - margin_x, height - t_height - margin_y)
+
+    def synthesize_branded_asset(self, asset_path: Path):
         """
-        Synthesizes a branded asset by overlaying a semi-transparent watermark.
-        
-        :param image_path: Path to the source image.
-        :param opacity: Alpha channel value (0-255). 128 for 50% transparency.
+        Orchestrates the synthesis of a branded asset using alpha-channel compositing.
+        Implements a 'Drop Shadow' effect for visibility across high-contrast backgrounds.
         """
         try:
-            with Image.open(image_path).convert("RGBA") as base_img:
-                # Create a transparent overlay for the watermark
-                overlay = Image.new("RGBA", base_img.size, (255, 255, 255, 0))
+            with Image.open(asset_path).convert("RGBA") as base:
+                # 1. Heuristic Font Scaling
+                # Scale font size to approximately 4% of image width
+                font_size = max(20, int(base.width * 0.04))
+                
+                # In production, specify a high-end .ttf path like 'fonts/Roboto-Bold.ttf'
+                try:
+                    font = ImageFont.truetype("arial.ttf", font_size)
+                except IOError:
+                    font = ImageFont.load_default()
+
+                # 2. Layer Synthesis
+                overlay = Image.new("RGBA", base.size, (0, 0, 0, 0))
                 draw = ImageDraw.Draw(overlay)
                 
-                # Dynamic font scaling based on asset dimensions
-                font_size = int(base_img.width / 15)
-                # Note: For professional use, load a .ttf file using ImageFont.truetype()
-                font = ImageFont.load_default() 
-
-                # Precise coordinate calculation for Bottom-Right placement
-                bbox = draw.textbbox((0, 0), self.brand_text, font=font)
+                # Calculate text dimensions
+                bbox = draw.textbbox((0, 0), self.brand_id, font=font)
                 text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-                
-                margin = 20
-                coords = (base_img.width - text_w - margin, base_img.height - text_h - margin)
+                coords = self._calculate_safe_zone(base.size, (text_w, text_h))
 
-                # Rendering text with alpha blending (Semi-transparent White)
-                draw.text(coords, self.brand_text, font=font, fill=(255, 255, 255, opacity))
+                # 3. Execution of the 'Shadow-Text' Protocol
+                # Layer 1: Subtle black shadow for readability on light backgrounds
+                draw.text((coords[0]+2, coords[1]+2), self.brand_id, font=font, fill=(0, 0, 0, 100))
+                # Layer 2: Primary brand text (Semi-transparent White)
+                draw.text(coords, self.brand_id, font=font, fill=(255, 255, 255, 160))
 
-                # Composite the overlay onto the original asset
-                branded_asset = Image.alpha_composite(base_img, overlay)
+                # 4. Composite & Persistence
+                branded = Image.alpha_composite(base, overlay)
                 
-                # Persist to disk (Convert back to RGB for JPEG compatibility)
-                output_file = self.output_path / image_path.name
-                branded_asset.convert("RGB").save(output_file, "JPEG", quality=95)
-                logging.info(f"Successfully branded: {image_path.name}")
+                # Determine output path & convert back to RGB for JPEG compliance
+                output_file = self.output_path / f"branded_{asset_path.stem}.jpg"
+                branded.convert("RGB").save(output_file, "JPEG", quality=92, optimize=True)
+                logging.info(f"   ✅ Asset Persisted: {output_file.name}")
 
         except Exception as e:
-            logging.error(f"Critical failure during asset synthesis for {image_path.name}: {e}")
+            logging.error(f"❌ Synthesis Failure for {asset_path.name}: {e}")
 
-    def execute_batch_sequence(self):
-        """Orchestrates the batch processing lifecycle for all identified assets."""
-        valid_extensions = ('.jpg', '.jpeg', '.png')
-        assets = [f for f in self.input_path.iterdir() if f.suffix.lower() in valid_extensions]
+    def execute_parallel_batch(self):
+        """
+        Orchestrates high-volume asset branding using multi-process execution.
+        Optimized for 2026 multi-core architectures.
+        """
+        valid_formats = ('.jpg', '.jpeg', '.png', '.webp')
+        assets = [f for f in self.input_path.iterdir() if f.suffix.lower() in valid_formats]
         
         if not assets:
-            logging.warning(f"No valid assets detected in {self.input_path}. Operation aborted.")
+            logging.warning("No valid payloads detected in the input vault.")
             return
 
-        logging.info(f"🚀 Initiating batch branding for {len(assets)} assets...")
-        for asset in assets:
-            self.apply_watermark(asset)
+        logging.info(f"📂 Batch sequence initiated for {len(assets)} assets...")
         
-        logging.info("-" * 45)
-        logging.info(f"✅ Orchestration Complete. Assets persisted at: [{self.output_path}]")
+        # Using ProcessPoolExecutor for true CPU parallelism
+        with ProcessPoolExecutor() as executor:
+            executor.map(self.synthesize_branded_asset, assets)
+
+        logging.info("🏆 Mission Accomplished. All assets synchronized and branded.")
 
 if __name__ == "__main__":
-    # Deployment in Guangzhou Local Environment
-    engine = ImageBrandingEngine()
-    engine.execute_batch_sequence()
+    print("\n" + "="*55)
+    print("      YANG-TECH-LAB: VISION ORCHESTRATOR PRO")
+    print("="*55 + "\n")
+    
+    orchestrator = BrandingOrchestrator()
+    orchestrator.execute_parallel_batch()
