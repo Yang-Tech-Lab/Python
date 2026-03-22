@@ -1,128 +1,140 @@
 """
-WeatherSentinel Pro: Automated Meteorological Intelligence Dashboard
--------------------------------------------------------------------
-A high-performance Web-UI designed to interface with global weather grids 
-and render real-time atmospheric metrics.
+WeatherSentinel Pro: Advanced Geospatial Intelligence Dashboard
+---------------------------------------------------------------
+An enterprise-grade Web-UI designed for real-time atmospheric 
+surveillance and geospatial data orchestration.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Full-Stack Web Automation
-Date: February 2026
+Category: Full-Stack Systems / IoT Automation
+Date: March 22, 2026
 """
 
-import streamlit as st
-import requests
+import os
 import logging
+import requests
+import pandas as pd
+import streamlit as st
 from datetime import datetime
+from dotenv import load_dotenv
 from typing import Dict, Optional, Final
 
-# 1. Industrial Configuration & Branding
+# 1. Initialize Secure Environment & Infrastructure
+load_dotenv() # Ingests secrets from .env file
+
 st.set_page_config(
-    page_title="WeatherSentinel Pro", 
-    page_icon="📡", 
+    page_title="WeatherSentinel Pro | Yang-Tech-Lab",
+    page_icon="🛰️",
     layout="wide"
 )
 
-# Professional CSS to refine UI aesthetics
+# Professional CSS: Industrial Dark Theme
 st.markdown("""
     <style>
-    .main {
-        background-color: #0e1117;
-    }
     .stMetric {
-        background-color: #1e1e1e;
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid #333;
+        background-color: #0e1117;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #1f2937;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px;
+        background-color: #2563eb;
+        color: white;
     }
     </style>
     """, unsafe_allow_html=True)
 
-class WeatherEngine:
-    """Handles all geospatial data acquisition and API interactions."""
-    def __init__(self, api_key: str):
-        self.api_key: Final[str] = api_key
+class AtmosphericEngine:
+    def __init__(self):
+        # Security Protocol: Hardcoded key removed. 
+        # Source: Environment variables or Streamlit Secrets
+        self.__api_key: Final[str] = os.getenv("OPENWEATHER_API_KEY", "")
         self.base_url: Final[str] = "https://api.openweathermap.org/data/2.5/weather"
 
-    def fetch_meteorological_data(self, city: str) -> Optional[Dict]:
-        """Initiates a satellite handshake to retrieve real-time data."""
+    def execute_satellite_scan(self, city: str) -> Optional[Dict]:
+        """Orchestrates a satellite handshake for atmospheric metrics."""
+        if not self.__api_key:
+            st.error("❌ CRITICAL: API Key not detected in secure environment.")
+            return None
+
         params = {
             "q": city,
-            "appid": self.api_key,
+            "appid": self.__api_key,
             "units": "metric",
-            "lang": "en" # Standardized for international deliverables
+            "lang": "en"
         }
         try:
-            response = requests.get(self.base_url, params=params, timeout=12)
-            if response.status_code == 200:
-                return response.json()
-            return None
+            response = requests.get(self.base_url, params=params, timeout=15)
+            response.raise_for_status()
+            return response.json()
         except Exception as e:
-            logging.error(f"Atmospheric Data Ingestion Failed: {e}")
+            logging.error(f"Uplink Failure: {e}")
             return None
 
-def render_dashboard():
-    """Orchestrates the UI rendering and data visualization."""
+def main():
+    # --- Header Orchestration ---
     st.title("🛰️ Atmospheric Intelligence Interface")
-    st.caption("Global Real-Time Weather Surveillance | Powered by Yang-Tech-Lab Engine")
+    st.caption("Industrial-Grade Weather Surveillance Node | Version 2.0.26")
+    
+    # --- Sidebar: Parametric Control ---
+    st.sidebar.header("🕹️ Tactical Controls")
+    target_node = st.sidebar.text_input("Geospatial Target (City Name):", "Guangzhou")
+    unit_system = st.sidebar.selectbox("Unit System:", ["Metric (°C)", "Imperial (°F)"])
+    scan_triggered = st.sidebar.button("Execute Intelligence Scan")
 
-    # --- Sidebar: Operational Control ---
-    st.sidebar.header("🕹️ Operational Controls")
-    target_city = st.sidebar.text_input("Geospatial Target (City):", "Guangzhou")
-    execute_scan = st.sidebar.button("Execute Satellite Scan")
+    engine = AtmosphericEngine()
 
-    # API Key Management (In production, use st.secrets)
-    API_KEY = "103104f0c64435943e54807674a02704"
-    engine = WeatherEngine(API_KEY)
-
-    if execute_scan:
-        with st.spinner('Initiating satellite uplink...'):
-            data = engine.fetch_meteorological_data(target_city)
-            
+    if scan_triggered:
+        with st.status("Establishing satellite uplink...", expanded=True) as status:
+            data = engine.execute_satellite_scan(target_node)
             if data:
-                # 1. Coordinate & Header Section
+                status.update(label="Scan Sequence Complete. Rendering Intelligence.", state="complete")
+                
+                # --- Phase 1: Geospatial Positioning ---
                 lat, lon = data['coord']['lat'], data['coord']['lon']
-                st.subheader(f"📍 Target Identified: {data['name']} [{lat}, {lon}]")
-                
-                # 2. Icon & Summary
-                icon_code = data['weather'][0]['icon']
-                condition = data['weather'][0]['description'].upper()
-                col_icon, col_text = st.columns([1, 4])
-                with col_icon:
-                    st.image(f"https://openweathermap.org/img/wn/{icon_code}@4x.png")
-                with col_text:
-                    st.markdown(f"### Current Status: **{condition}**")
-                    st.info(f"Local time observation synchronized from global grid.")
+                col_info, col_map = st.columns([1, 1])
 
-                # 3. High-Fidelity Metrics
+                with col_info:
+                    st.header(f"📍 {data['name']}, {data['sys']['country']}")
+                    st.markdown(f"**Coordinates:** `{lat} N, {lon} E`")
+                    st.markdown(f"**Observation Sync:** `{datetime.now().strftime('%H:%M:%S')}`")
+                    
+                    # Condition Display
+                    icon = data['weather'][0]['icon']
+                    desc = data['weather'][0]['description'].upper()
+                    st.image(f"https://openweathermap.org/img/wn/{icon}@4x.png", width=150)
+                    st.info(f"Condition: **{desc}**")
+
+                with col_map:
+                    # Rendering high-fidelity map asset
+                    map_data = pd.DataFrame({'lat': [lat], 'lon': [lon]})
+                    st.map(map_data, zoom=10, use_container_width=True)
+
+                # --- Phase 2: High-Fidelity Metrics ---
                 st.divider()
-                m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+                m1, m2, m3, m4 = st.columns(4)
                 
-                # Temperature Data
                 temp = data['main']['temp']
-                feels = data['main']['feels_like']
-                m_col1.metric("Temperature", f"{temp}°C", f"Feels like {feels}°C")
-                
-                # Humidity Analytics
-                humidity = data['main']['humidity']
-                m_col2.metric("Humidity", f"{humidity}%")
-                
-                # Velocity Vectors
-                wind_speed = data['wind']['speed']
-                m_col3.metric("Wind Velocity", f"{wind_speed} m/s")
-                
-                # Atmospheric Pressure
-                pressure = data['main']['pressure']
-                m_col4.metric("Barometric Pressure", f"{pressure} hPa")
+                m1.metric("Temperature", f"{temp}°C", f"Feels {data['main']['feels_like']}°C")
+                m2.metric("Humidity", f"{data['main']['humidity']}%")
+                m3.metric("Wind Velocity", f"{data['wind']['speed']} m/s")
+                m4.metric("Barometric Pressure", f"{data['main']['pressure']} hPa")
 
-                # 4. Intelligence Payload (Raw Data)
+                # --- Phase 3: Raw Payload Inspection ---
                 st.divider()
-                with st.expander("📁 Inspect Raw Data Payload (JSON)"):
+                with st.expander("📁 Inspect Raw Ingestion Payload (JSON)"):
                     st.json(data)
             else:
-                st.error("❌ Target identification failed. Please verify the city name or network status.")
+                st.error("❌ Handshake failure. Target node unreachable or invalid.")
     else:
-        st.write("---")
-        st.warning("👈 Awaiting geospatial target input to initiate scan sequence.")
+        st.info("👈 System standby. Input geospatial target to initiate surveillance.")
+
+    # --- Footer Branding ---
+    st.sidebar.divider()
+    st.sidebar.caption("System Architect: Yang Jiacheng")
+    st.sidebar.caption("Branch: Yang-Tech-Lab / Full-Stack")
 
 if __name__ == "__main__":
-    render_dashboard()
+    main()
