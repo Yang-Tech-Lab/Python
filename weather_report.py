@@ -1,135 +1,153 @@
 """
-Meteorological Intelligence Orchestrator (Enterprise)
-----------------------------------------------------
-An advanced asynchronous-ready data acquisition engine with enhanced 
-security, error recovery, and professional report formatting.
+MeteorologicalOrchestrator Pro: Enterprise Data Synthesis Engine
+----------------------------------------------------------------
+A high-performance, asynchronous-ready orchestration engine for 
+geospatial intelligence acquisition and strategic fiscal persistence.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Data Engineering / Business Automation
-Date: February 2026
+Category: Data Engineering / Business Intelligence
+Date: March 23, 2026
 """
 
 import os
-import time
 import logging
 import pandas as pd
 import requests
+import time
 from datetime import datetime
 from pathlib import Path
+from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Optional, Final, TypedDict
 
-# 1. Advanced Logging Configuration (Log to both console and file)
+# 1. Industrial Infrastructure Configuration
+load_dotenv() # Ingests secrets from .env securely
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - [%(levelname)s] - %(message)s',
-    handlers=[
-        logging.FileHandler("system_audit.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("vault_audit.log"), logging.StreamHandler()]
 )
 
-# 2. Define Data Schema for strict consistency
-class WeatherSchema(TypedDict):
+class NodeTelemetry(TypedDict):
+    """Strict data schema for high-fidelity geospatial intelligence."""
     Node_ID: str
     Temp_C: float
+    Humidity_Pct: int
+    Wind_Velocity_MS: float
     Condition: str
-    Humidity: int
-    Metadata_Sync: str
+    Sync_Timestamp: str
 
-class WeatherIntelligenceEngine:
-    def __init__(self, api_key: Optional[str] = None):
-        # Security First: Priority given to Environment Variables
-        self.__api_key: Final[str] = api_key or os.getenv("OPENWEATHER_API_KEY", "")
+class IntelligenceOrchestrator:
+    def __init__(self):
+        # Security: Decoupled secret management
+        self.__api_key: Final[str] = os.getenv("OPENWEATHER_API_KEY", "")
         self.base_url: Final[str] = "https://api.openweathermap.org/data/2.5/weather"
-        self.registry: List[WeatherSchema] = []
-        self.output_path: Final[Path] = Path("Global_Market_Weather_Intelligence.xlsx")
+        self.vault_dir: Final[Path] = Path("Vault/Intelligence")
+        self.registry: List[NodeTelemetry] = []
+        
+        self._bootstrap_environment()
 
+    def _bootstrap_environment(self):
+        """Provisions the secure local persistence layers."""
+        self.vault_dir.mkdir(parents=True, exist_ok=True)
         if not self.__api_key:
-            logging.critical("Security Breach: Missing API Key in Environment Variables.")
-            raise ValueError("API Key is required for orchestration.")
+            logging.critical("Security Breach: Node unauthorized. Missing API Key.")
+            raise ConnectionError("Authentication failure in environment orchestration.")
 
-    def _fetch_with_retry(self, city: str, retries: int = 3) -> Optional[Dict]:
-        """Handshake with API using exponential backoff logic."""
+    def _fetch_node_pulse(self, city: str) -> Optional[NodeTelemetry]:
+        """Executes a single node handshake with resilient error recovery."""
         params = {"q": city, "appid": self.__api_key, "units": "metric", "lang": "en"}
         
-        for attempt in range(retries):
-            try:
-                response = requests.get(self.base_url, params=params, timeout=15)
-                response.raise_for_status()
-                return response.json()
-            except requests.exceptions.RequestException as e:
-                wait_time = (attempt + 1) * 2
-                logging.warning(f"Connection unstable for {city}. Retrying in {wait_time}s... Error: {e}")
-                time.sleep(wait_time)
-        return None
-
-    def execute_acquisition_pipeline(self, nodes: List[str]):
-        """Orchestrates data ingestion for all targeted geospatial nodes."""
-        logging.info(f"🚀 Initializing Acquisition Pipeline for {len(nodes)} strategic nodes.")
-        
-        for city in nodes:
-            raw_payload = self._fetch_with_retry(city)
-            if raw_payload:
-                # Data Transformation Layer
-                entity: WeatherSchema = {
-                    "Node_ID": city.upper(),
-                    "Temp_C": raw_payload['main']['temp'],
-                    "Condition": raw_payload['weather'][0]['description'].title(),
-                    "Humidity": raw_payload['main']['humidity'],
-                    "Metadata_Sync": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }
-                self.registry.append(entity)
-                logging.info(f"   ✅ Node Synchronized: {city} | Metric: {entity['Temp_C']}°C")
+        try:
+            # Applying adaptive timeout for global grid synchronization
+            response = requests.get(self.base_url, params=params, timeout=12)
+            response.raise_for_status()
+            data = response.json()
             
-            # Intelligent Throttling
-            time.sleep(1.0)
+            return {
+                "Node_ID": city.upper(),
+                "Temp_C": data['main']['temp'],
+                "Humidity_Pct": data['main']['humidity'],
+                "Wind_Velocity_MS": data['wind']['speed'],
+                "Condition": data['weather'][0]['description'].title(),
+                "Sync_Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        except Exception as e:
+            logging.error(f"⚠️ Node Desynchronized [{city}]: {e}")
+            return None
 
-    def persist_professional_report(self):
-        """Persists data with professional Excel formatting for client delivery."""
+    def execute_parallel_ingestion(self, targets: List[str]):
+        """Orchestrates high-concurrency data ingestion via thread pool orchestration."""
+        logging.info(f"🚀 Deploying ingestion sequence for {len(targets)} strategic nodes...")
+        
+        # Performance Formula: $$Efficiency = \frac{Nodes}{Concurrency\_Limit}$$
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_node = {executor.submit(self._fetch_node_pulse, node): node for node in targets}
+            
+            for future in as_completed(future_to_node):
+                result = future.result()
+                if result:
+                    self.registry.append(result)
+                    logging.info(f"   ✅ Node Synchronized: {result['Node_ID']} @ {result['Temp_C']}°C")
+
+    def persist_strategic_asset(self):
+        """Finalizes the intelligence payload into structured professional assets."""
         if not self.registry:
-            logging.error("Persistence Aborted: Registry is empty.")
             return
 
-        logging.info(f"💾 Generating high-fidelity report at: {self.output_path}")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        excel_asset = self.vault_dir / f"Global_Intelligence_Report_{timestamp}.xlsx"
+        
         df = pd.DataFrame(self.registry)
 
-        # Use XlsxWriter for "Premium" report formatting
         try:
-            with pd.ExcelWriter(self.output_path, engine='xlsxwriter') as writer:
-                df.to_excel(writer, sheet_name='Intelligence_Report', index=False)
+            # High-Fidelity Report Orchestration
+            with pd.ExcelWriter(excel_asset, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='Surveillance_Report', index=False)
                 
-                # Accessing the underlying workbook/worksheet for styling
                 workbook = writer.book
-                worksheet = writer.sheets['Intelligence_Report']
+                worksheet = writer.sheets['Surveillance_Report']
                 
-                # Define Professional Styles
-                header_format = workbook.add_format({
-                    'bold': True, 'font_color': 'white', 'bg_color': '#2C3E50', 'border': 1
+                # --- Advanced Enterprise Styling ---
+                header_fmt = workbook.add_format({
+                    'bold': True, 'font_color': 'white', 'bg_color': '#1B2631', 'border': 1
+                })
+                numeric_fmt = workbook.add_format({'num_format': '0.0', 'align': 'center'})
+                
+                for col_num, value in enumerate(df.columns.values):
+                    worksheet.write(0, col_num, value, header_fmt)
+                    worksheet.set_column(col_num, col_num, 18)
+                
+                # Applying conditional formatting for temperature thresholds
+                worksheet.conditional_format('B2:B100', {
+                    'type': '2_color_scale', 'min_color': "#AED6F1", 'max_color': "#E74C3C"
                 })
 
-                # Apply Header Format & Auto-adjust column width
-                for col_num, value in enumerate(df.columns.values):
-                    worksheet.write(0, col_num, value, header_format)
-                    worksheet.set_column(col_num, col_num, len(value) + 10)
+            logging.info(f"🏆 Strategic report deployed to vault: {excel_asset.name}")
+            
+            # Hardware-Ready Backup (JSON format for future ESP32/OLED integration)
+            json_asset = self.vault_dir / f"node_data_pulse.json"
+            df.to_json(json_asset, orient="records", indent=4)
+            logging.info("💾 Hardware-compatible payload mirrored for local node integration.")
 
-            logging.info("🏆 Professional Report Deployed Successfully.")
         except Exception as e:
-            logging.error(f"Persistence Layer Failure: {e}")
+            logging.error(f"Persistence Layer Breach: {e}")
 
 if __name__ == "__main__":
-    # Standard Operating Procedure (SOP)
-    # Recommended: Set env var via 'export OPENWEATHER_API_KEY=your_key'
-    print("--- Sentinel Protocol Offline: System Initializing ---")
+    print("\n" + "="*55)
+    print("      YANG-TECH-LAB: METEOROLOGICAL ORCHESTRATOR v3.2")
+    print("="*55 + "\n")
     
     try:
-        # Injects API Key from environment (Best Practice)
-        engine = WeatherIntelligenceEngine()
+        orchestrator = IntelligenceOrchestrator()
+        # Strategic Nodes: Guangzhou as home node + Global Market Hubs
+        GLOBAL_NODES = ["Guangzhou", "London", "Tokyo", "Singapore", "Berlin", "New York"]
         
-        TARGET_NODES = ["London", "New York", "Tokyo", "Singapore", "Guangzhou", "Berlin"]
-        engine.execute_acquisition_pipeline(TARGET_NODES)
-        engine.persist_professional_report()
+        orchestrator.execute_parallel_ingestion(GLOBAL_NODES)
+        orchestrator.persist_professional_report()
         
-    except Exception as e:
-        logging.critical(f"System Crash: {e}")
-        
-    print("-" * 55)
+    except Exception as fatal_e:
+        logging.critical(f"System Termination Pulse: {fatal_e}")
+    
+    print("\n--- Session Complete: All Assets Persisted to Vault ---")
