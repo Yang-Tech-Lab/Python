@@ -1,27 +1,54 @@
-name: Crypto Sentinel Bot
+name: "Sentinel-Orchestrator: High-Fidelity Crypto Monitoring"
 
+# 1. Trigger Orchestration
 on:
   schedule:
+    # Triggered at 00:00 UTC daily for strategic synchronization
     - cron: '0 0 * * *'
-  workflow_dispatch:
+  workflow_dispatch: # Allows manual intervention for emergency scans
+
+# 2. Permissions Management
+permissions:
+  contents: write # Required for persisting logs back to the repository
 
 jobs:
-  build:
+  orchestrate-sentinel:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # --- Phase 1: Environment Provisioning ---
+      - name: Synchronize Repository Assets
+        uses: actions/checkout@v4 # Upgraded to v4 for 2026 compatibility
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Initialize Industrial Python Environment
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12' # Optimized for modern asynchronous syntax
+          cache: 'pip' # Automated dependency caching to reduce build latency
 
-      - name: Install dependencies
+      # --- Phase 2: Dependency & Secret Injection ---
+      - name: Inject Dependencies
         run: |
-          pip install requests
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install requests python-dotenv # Ensuring core toolchain is present
 
-      - name: Run Script
+      # --- Phase 3: Execution & Intelligence Acquisition ---
+      - name: Execute Sentinel Protocol
+        env:
+          # Security: Injecting secrets from GitHub Vault (Never hardcoded)
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          CRYPTO_API_KEY: ${{ secrets.CRYPTO_API_KEY }}
         run: |
           python cloud_sentinel.py
+
+      # --- Phase 4: Persistence & Audit Trail ---
+      - name: Persist Audit Logs to Vault
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          # Logic: Synchronizing local logs back to the secure vault
+          git add Vault/Logs/*.csv || true
+          git add Vault/Intelligence/*.log || true
+          git commit -m "chore: [Sentinel] automated intelligence synchronization [skip ci]" || echo "No changes to commit"
+          git push origin main
