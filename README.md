@@ -1,41 +1,40 @@
 
-🚀 Yang-Lab: Advanced Systems Automation & Hardware Intelligence
-> Engineering full-stack solutions that bridge the gap between high-level software logic and low-level hardware precision.
+🛰️ Yang-Tech-Lab: Industrial Systems & Hardware Intelligence Orchestrator
+> "Bridging the chasm between deterministic hardware precision and high-level software orchestration."
 > 
-This repository serves as an Industrial Armory for Python-driven automation, data intelligence, and hardware-software orchestration. Designed for scalability, reliability, and professional client delivery.
+Yang-Tech-Lab is a 2026-spec Industrial Armory designed for scalable systems automation, quantitative data intelligence, and hardware-software co-design. This repository centralizes professional-grade Python frameworks used to streamline the entire engineering lifecycle—from market arbitrage to manufacturing-ready PCB deployment.
 🏗️ Core Engineering Pillars
-| Pillar | Technical Focus | Commercial Value |
+| Pillar | Technical Implementation | Strategic Value |
 |---|---|---|
-| Data Orchestration | Pandas, NumPy, ETL Pipelines | Automated Financial/Market Intelligence |
-| Web Intelligence | Selenium Pro, BeautifulSoup4, Requests | Autonomous Data Acquisition & Verification |
-| Hardware DevOps | KiCad Python API, Impedance Control | 90% Faster BOM & Manufacturing Workflow |
-| Full-Stack UI | Streamlit, Plotly, Interactive Dashboards | Real-time Asset & Sensor Surveillance |
+| Data Orchestration | Pandas, NumPy, Scikit-learn | Automated Fiscal Ingestion & Market Forecasting |
+| Web Intelligence | Selenium (Stealth), Regex, BS4 | Autonomous Competitive Intelligence Acquisition |
+| Hardware DevOps | KiCad 9.0 API, JSON Serialization | 95% Faster DFM (Design for Manufacturing) Cycles |
+| Fiscal Analytics | Plotly, Matplotlib, Nasdaq-100 APIs | Quantitative Portfolio & Asset Surveillance |
 📂 Featured Intelligence Modules
-1. Autonomous Market Intelligence & Verification Engine
-Technology: Selenium (Headless), Heuristic Wait Protocols
-A high-fidelity automation engine designed to simulate human behavior for deep market research. It bypasses basic anti-bot mechanisms to capture "Proof of Work" for international clients.
- * Capabilities: Multi-threaded querying, automated screenshot reporting, and stealth browsing.
- * Verification: Generates professional PDF "Truth Reports" with timestamped evidence.
-2. Fiscal Data Orchestration & Analytics Pipeline
-Technology: Pandas, Openpyxl, Matplotlib/Plotly
-Transforms fragmented transactional data (Fiverr/Upwork/Stripe) into executive-level financial reports.
- * Advanced Logic: Implements automated tax calculation, trend forecasting, and outlier detection.
- * Formulaic Precision: Uses LaTeX-standard calculations for growth metrics:
+1. Cyber-Intelligence & Extraction Engine (CIEE)
+Technology: Headless Selenium, Heuristic Wait Protocols, Multi-threaded Proxies.
+A high-fidelity automation node designed to simulate human behavioral entropy. It bypasses conventional anti-bot heuristics to capture high-value market data for strategic analysis.
+ * Stealth Ingestion: Automated multi-threaded querying with dynamic User-Agent rotation.
+ * Audit-Ready Reporting: Generates timestamped PDF "Evidence Reports" with full DOM snapshots.
+2. Quantitative Fiscal Orchestrator (QFO)
+Technology: Pandas, XlsxWriter, S&P 500/Nasdaq-100 Telemetry.
+Transforms fragmented financial streams into executive-grade intelligence. Specifically optimized for tracking compounding growth and market volatility.
+ * Deterministic Metrics: Implements automated tax reconciliation and growth forecasting using the CAGR formula:
    
- * Outcome: 95% reduction in manual bookkeeping for freelance operations.
-3. Hardware Lifecycle Automation (KiCad Pro-Sync)
-Technology: KiCad 9.0 Python API, JSON/CSV Serialization
-Bridges the gap between PCB design and manufacturing. Automates the most tedious aspects of hardware development.
- * Automated BOM Management: Synchronizes local KiCad footprints with live component prices from global APIs.
- * Compliance Checks: Automated impedance matching verification for high-speed differential pairs (USB 3.0/HDMI).
-📈 Engineering Standards
-> "Code is the bridge; hardware is the destination."
+ * Asset Surveillance: Real-time visualization of portfolio health against global equity benchmarks.
+3. Hardware Lifecycle Automator (KiCad-Sync Pro)
+Technology: KiCad 9.0 Python API, LCSC/Mouser API Integration.
+Bridges the gap between schematic capture and the assembly line. Designed for the Applied Electronic Technology specialist.
+ * Automated BOM Synthesis: Synchronizes KiCad footprints with live component pricing and stock telemetry.
+ * Impedance Orchestration: Automated verification of differential pair constraints (e.g., 90\Omega USB / 100\Omega Ethernet) based on JLC/PCBWay stackup specifications.
+📈 Engineering Philosophy
+> "Code is the transient logic; Hardware is the terminal destination."
 > 
- * Robustness: Every module implements strict try-except-finally blocks and industrial-grade logging.
- * Scalability: Logic is encapsulated within Classes (OOP) to allow seamless integration into larger IoT ecosystems (ESP32/STM32).
- * Documentation: Clean code architecture with explicit Type Hinting (PEP 484).
+ * Resilience: Every module implements strict try-except-finally blocks and industrial-grade structured logging (Vault/Audit.log).
+ * Modularity: Logic is encapsulated within Object-Oriented Classes (OOP) to facilitate seamless integration into larger IoT ecosystems (ESP32 / STM32).
+ * Compliance: Explicit Type Hinting (PEP 484) and adherence to clean code architecture.
 📮 System Architect
- * Developer: Yang Jiacheng (Yang-Lab)
- * Location: China- Global Remote Ops
- * Focus: Full-stack Data Systems | IoT Prototyping | High-Speed PCB Design
-
+ * Lead Engineer: Yang Jiacheng (Yang-Tech-Lab)
+ * Location: Guangzhou / Wuchuan, China (Global Remote Operations)
+ * Specialty: Full-stack Systems | IoT Prototyping | High-Speed Digital Design
+ * Primary Stack: ThinkPad X240 (Field Dev) | Python 3.12+ | KiCad 9.0 | ESP-IDF
