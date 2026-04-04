@@ -1,16 +1,22 @@
 """
-AuthOrchestrator Pro: Automated Identity Verification Engine
-------------------------------------------------------------
-A high-fidelity Selenium orchestration suite designed for secure 
-authentication sequences and session state verification.
+IdentityOrchestrator Pro: Enterprise Authentication Suite
+---------------------------------------------------------
+A high-fidelity Selenium orchestration node designed for resilient 
+identity verification and session state persistence.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Quality Assurance / Process Automation
-Date: March 2026
+Category: Automation / Security Engineering
+Date: April 4, 2026
 """
 
+import os
 import logging
+import time
 from pathlib import Path
+from datetime import datetime
+from typing import Optional, Final, Dict
+from dotenv import load_dotenv
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -19,93 +25,123 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
-# 1. Industrial Logging Configuration
+# 1. Industrial Infrastructure Configuration
+load_dotenv() # Ingests credentials from .env securely
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] - %(message)s'
+    format='%(asctime)s - [%(levelname)s] - %(message)s',
+    handlers=[
+        logging.FileHandler("Vault/Logs/identity_audit.log"),
+        logging.StreamHandler()
+    ]
 )
 
-class AuthOrchestrator:
+class IdentityOrchestrator:
     def __init__(self, headless: bool = False):
-        self.target_url: str = "https://practicetestautomation.com/practice-test-login/"
-        self.options = Options()
-        if headless:
-            self.options.add_argument("--headless=new")
+        self.target_url: Final[str] = "https://practicetestautomation.com/practice-test-login/"
+        self.vault_path: Final[Path] = Path("Vault/Artifacts")
+        self.driver: Optional[webdriver.Chrome] = None
+        self.headless: bool = headless
         
-        # Anti-detection & Stability Measures
-        self.options.add_argument("--disable-blink-features=AutomationControlled")
-        self.options.add_argument("window-size=1920,1080")
+        self._bootstrap_environment()
+
+    def _bootstrap_environment(self):
+        """Provisions the secure local vault and initializes the stealth engine."""
+        self.vault_path.mkdir(parents=True, exist_ok=True)
+        
+        options = Options()
+        if self.headless:
+            options.add_argument("--headless=new")
+        
+        # --- Advanced 2026 Stealth Protocols ---
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_argument("window-size=1920,1080")
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
         
         self.driver = webdriver.Chrome(
             service=Service(ChromeDriverManager().install()),
-            options=self.options
+            options=options
         )
-        # Explicit Wait: Polling every 500ms for element state
-        self.wait = WebDriverWait(self.driver, 15)
-        logging.info("🚀 AuthOrchestrator initialized and ready for deployment.")
+        
+        # Neutralize 'navigator.webdriver' flag via CDP
+        self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        })
+        
+        self.wait = WebDriverWait(self.driver, 20)
+        logging.info("🚀 IdentityOrchestrator Online. Stealth node deployed.")
 
-    def execute_auth_sequence(self, username: str, password: str):
-        """Orchestrates the login handshake and verifies credential acceptance."""
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.decommission_node()
+
+    def execute_auth_handshake(self, username: Optional[str] = None, password: Optional[str] = None):
+        """Orchestrates the identity verification sequence with error recovery."""
+        # Security: Priority given to Environment Variables if not provided
+        u = username or os.getenv("TEST_USER", "student")
+        p = password or os.getenv("TEST_PASS", "Password123")
+
         try:
-            logging.info(f"🌐 Accessing secure gateway: {self.target_url}")
+            logging.info(f"🌐 Accessing secure node: {self.target_url}")
             self.driver.get(self.target_url)
 
-            # --- Data Injection Phase ---
-            logging.info("⌨️ Injecting identity credentials...")
+            # --- Data Ingestion Phase ---
+            logging.info("⌨️ Injecting identity metrics...")
             
-            # Locate and input Username
-            user_field = self.wait.until(EC.presence_of_element_located((By.ID, "username")))
-            user_field.send_keys(username)
+            user_node = self.wait.until(EC.element_to_be_clickable((By.ID, "username")))
+            user_node.send_keys(u)
             
-            # Locate and input Password
-            pass_field = self.driver.find_element(By.ID, "password")
-            pass_field.send_keys(password)
+            self.driver.find_element(By.ID, "password").send_keys(p)
             
-            # Execute Submission
-            submit_btn = self.driver.find_element(By.ID, "submit")
-            logging.info("🖱️ Executing authentication handshake (Submit)...")
-            submit_btn.click()
+            logging.info("🖱️ Commencing authentication pulse (Submit)...")
+            self.driver.find_element(By.ID, "submit").click()
 
-            # --- Verification Phase ---
-            self._verify_authentication_status()
+            # --- Session Integrity Verification ---
+            return self._verify_session_integrity()
 
         except Exception as e:
-            logging.error(f"❌ Authentication Breach: {e}")
-        finally:
-            self._decommission_session()
+            logging.error(f"❌ Ingestion Breach: {e}")
+            return False
 
-    def _verify_authentication_status(self):
-        """Validates the DOM state to confirm successful session establishment."""
-        logging.info("⏳ Waiting for session stabilization...")
+    def _verify_session_integrity(self) -> bool:
+        """Validates the state of the session and captures technical artifacts."""
+        logging.info("⏳ Waiting for tactical DOM stabilization...")
         
-        # Checking for URL redirect or successful login indicators
         try:
             self.wait.until(EC.url_contains("logged-in-successfully"))
-            logging.info("🎉 SUCCESS: Identity verified. Access granted to dashboard.")
+            logging.info("🎉 SUCCESS: Identity Pulse Verified. Access Granted.")
             
-            # Visual Proof of Work
-            evidence_path = Path("auth_verification_evidence.png")
-            self.driver.save_screenshot(str(evidence_path))
-            logging.info(f"📸 Forensic artifact captured: {evidence_path}")
+            # Artifact Persistence
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+            filename = self.vault_path / f"Auth_Evidence_{timestamp}.png"
+            self.driver.save_screenshot(str(filename))
+            logging.info(f"📸 Forensic artifact persisted: {filename.name}")
+            return True
             
         except Exception:
-            logging.warning("❌ FAILURE: Identity rejected. Please check credentials or anti-bot blocks.")
+            logging.warning("❌ REJECTED: Session integrity check failed.")
+            return False
 
-    def _decommission_session(self):
-        """Safely terminates the browser instance and releases system resources."""
+    def decommission_node(self):
+        """Safely decommissions the engine and releases peripheral resources."""
         if self.driver:
-            import time
-            logging.info("Decommissioning session in 5 seconds...")
-            time.sleep(5)
+            logging.info("Releasing node resources in 3 seconds...")
+            time.sleep(3)
             self.driver.quit()
             logging.info("🏁 Sentinel Protocol Offline.")
 
 if __name__ == "__main__":
-    # Deployment Configuration
-    orchestrator = AuthOrchestrator(headless=False)
+    # Deployment SOP for 2026.04.04
+    print("\n" + "="*55)
+    print("      YANG-TECH-LAB: IDENTITY ORCHESTRATOR v3.5")
+    print("="*55 + "\n")
     
-    # Executing with test credentials
-    orchestrator.execute_auth_sequence(
-        username="student", 
-        password="Password123"
-    )
+    # Using Context Manager for guaranteed decommissioning
+    # Optimized for ThinkPad X240 development environments
+    with IdentityOrchestrator(headless=False) as orchestrator:
+        orchestrator.execute_auth_handshake()
