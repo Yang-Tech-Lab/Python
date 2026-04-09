@@ -1,120 +1,131 @@
 """
-AssetSentinel Pro: High-Fidelity Signal Orchestrator
-----------------------------------------------------
-An industrial-grade monitoring suite designed for deterministic market 
-analysis, autonomous risk mitigation, and fiscal audit persistence.
+AssetSentinel Pro: v4.5 Industrial-Grade Signal Orchestrator
+------------------------------------------------------------
+A high-fidelity, asynchronous orchestration engine designed for 
+real-time asset telemetry, heuristic risk mitigation, and 
+deterministic hardware-software synchronization.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Fintech Systems / Robotic Process Automation (RPA)
-Date: March 2026
+Category: Fintech Systems / Systems Engineering
+Date: April 9, 2026
 """
 
-import schedule
-import time
+import asyncio
 import logging
 import random
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
-from typing import Final, Dict, TypedDict, List, Optional
+from collections import deque
+from typing import Final, Dict, List, Optional, Any
 
-# 1. Industrial Logging Configuration
+# 1. Industrial Infrastructure & Logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - [%(levelname)s] - %(message)s',
     handlers=[
-        logging.FileHandler("sentinel_audit.log"),
+        logging.FileHandler("vault/sentinel_audit.log"),
         logging.StreamHandler()
     ]
 )
 
-# Define strict data schema for the internal registry
-class MarketSnapshot(TypedDict):
-    timestamp: str
-    ticker: str
-    price_usd: float
-    volatility_index: str
-    alert_triggered: bool
-
-class SentinelEngine:
-    """The core intelligence node responsible for asset surveillance."""
-    
-    def __init__(self, ticker: str, alert_floor: float):
+class AssetSentinelOrchestrator:
+    def __init__(self, ticker: str, risk_floor: float):
         self.ticker: Final[str] = ticker
-        self.alert_floor: Final[float] = alert_floor
-        self.ledger_path: Final[Path] = Path("vault/market_intelligence.csv")
+        self.risk_floor: Final[float] = risk_floor
+        self.vault_path: Final[Path] = Path("vault/intelligence")
+        self.ledger_file: Final[Path] = self.vault_path / f"{ticker}_telemetry.csv"
+        
+        # High-performance memory buffer for I/O optimization
+        self.telemetry_buffer = deque(maxlen=100)
         self._bootstrap_environment()
 
     def _bootstrap_environment(self):
-        """Ensures the persistence layer and local filesystem are provisioned."""
-        self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
-        if not self.ledger_path.exists():
-            headers = ["timestamp", "ticker", "price_usd", "volatility_index", "alert_triggered"]
-            pd.DataFrame(columns=headers).to_csv(self.ledger_path, index=False)
-            logging.info("🛠️ Fiscal Ledger provisioned in the secure vault.")
+        """Provisions the secure local storage and synchronizes the ledger."""
+        self.vault_path.mkdir(parents=True, exist_ok=True)
+        if not self.ledger_file.exists():
+            headers = ["timestamp", "valuation", "variance_pct", "status", "iot_sync"]
+            pd.DataFrame(columns=headers).to_csv(self.ledger_file, index=False)
+            logging.info(f"🛠️ Ledger synchronized for node: {self.ticker}")
 
-    def _ingest_market_data(self) -> float:
+    async def _ingest_market_telemetry(self) -> float:
         """
-        Simulates high-fidelity market data ingestion. 
-        In production: Interface with CCXT or Webhook-based API.
+        Simulates high-fidelity market data ingestion.
+        2026 Spec: Non-blocking I/O simulation.
         """
-        # Logic: 2026-era BTC price volatility simulation around the $100k mark
+        await asyncio.sleep(0.2) # Simulate network latency
+        # Logic: High-frequency volatility simulation
         return round(random.uniform(94000, 106000), 2)
 
-    def _dispatch_alert(self, snapshot: MarketSnapshot):
-        """Executes the emergency notification protocol."""
-        logging.critical(f"🚨 SIGNAL BREACH: {snapshot['ticker']} dropped below ${self.alert_floor:,.2f}!")
-        print("\n" + "!" * 50)
-        print(f"SECURITY ALERT | {snapshot['timestamp']}")
-        print(f"ASSET: {snapshot['ticker']} | VALUATION: ${snapshot['price_usd']:,.2f}")
-        print(f"ACTION: Automated notification pushed to Yang-Tech-Lab HQ.")
-        print("!" * 50 + "\n")
+    async def _dispatch_hardware_signal(self, status: str):
+        """
+        Simulates IoT synchronization with Yang-Tech-Lab hardware (ESP32/STM32).
+        In production: Use 'pyserial' or 'MQTT' to trigger physical alerts.
+        """
+        if status == "CRITICAL":
+            logging.warning(f"📡 IoT Sync: Sending EMERGENCY_RED signal to hardware terminal...")
+            # Simulated serial write: serial.write(b'ALERT_RED')
+        else:
+            # Simulated serial write: serial.write(b'STATUS_OK')
+            pass
 
-    def run_surveillance_cycle(self):
-        """Orchestrates a single polling sequence and persists the telemetry."""
+    async def _process_heuristics(self, price: float):
+        """Orchestrates the decision-making logic and triggers risk mitigation."""
+        variance = round(((price - self.risk_floor) / self.risk_floor) * 100, 2)
+        is_breached = price < self.risk_floor
+        status = "CRITICAL" if is_breached else "STABLE"
+        
+        snapshot = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "valuation": price,
+            "variance_pct": variance,
+            "status": status,
+            "iot_sync": "ACTIVE"
+        }
+
+        # 1. Update In-memory Buffer
+        self.telemetry_buffer.append(snapshot)
+        
+        # 2. Trigger Alerts & Hardware Sync
+        if is_breached:
+            logging.critical(f"🚨 RISK DETECTED: {self.ticker} @ ${price:,.2f} (Floor: ${self.risk_floor:,.2f})")
+            await self._dispatch_hardware_signal("CRITICAL")
+        
+        # 3. Persistence (Batch write to reduce SSD wear)
+        if len(self.telemetry_buffer) >= 5:
+            await self._persist_to_ledger()
+
+    async def _persist_to_ledger(self):
+        """Flushes the telemetry buffer to the fiscal ledger."""
         try:
-            current_valuation = self._ingest_market_data()
-            breached = current_valuation < self.alert_floor
-            
-            # Construct high-fidelity snapshot
-            snapshot: MarketSnapshot = {
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "ticker": self.ticker,
-                "price_usd": current_valuation,
-                "volatility_index": "HIGH" if breached else "NORMAL",
-                "alert_triggered": breached
-            }
-
-            logging.info(f"Scan complete: {snapshot['ticker']} @ ${snapshot['price_usd']:,.2f}")
-
-            # Persist to local intelligence vault
-            pd.DataFrame([snapshot]).to_csv(self.ledger_path, mode='a', header=False, index=False)
-
-            if breached:
-                self._dispatch_alert(snapshot)
-
+            df = pd.DataFrame(list(self.telemetry_buffer))
+            df.to_csv(self.ledger_file, mode='a', header=False, index=False)
+            self.telemetry_buffer.clear()
+            logging.info(f"💾 Persistence layer synchronized for {self.ticker}.")
         except Exception as e:
-            logging.error(f"Surveillance Protocol Interrupted: {e}")
+            logging.error(f"Persistence Breach: {e}")
 
-def main():
-    # Configuration: BTC monitoring with a $98,000 Risk Floor
-    #
-    sentinel = SentinelEngine(ticker="BTC-USD", alert_floor=98000.0)
-
-    # Deployment Schedule: Every 5 seconds for simulation fidelity
-    schedule.every(5).seconds.do(sentinel.run_surveillance_cycle)
-
-    print("\n" + "="*55)
-    print("🚀 AssetSentinel Pro: Operational Intelligence Active")
-    print(f"Surveillance Target: {sentinel.ticker} | Threshold: ${sentinel.alert_floor:,.2f}")
-    print("="*55 + "\n")
-
-    try:
+    async def start_surveillance_node(self):
+        """Initiates the infinite asynchronous monitoring loop."""
+        logging.info(f"🚀 Sentinel Node [{self.ticker}] is now ONLINE.")
+        
         while True:
-            schedule.run_pending()
-            time.sleep(1)
+            current_price = await self._ingest_market_telemetry()
+            await self._process_heuristics(current_price)
+            await asyncio.sleep(5) # Adaptive polling frequency
+
+async def main():
+    print("\n" + "="*60)
+    print("       YANG-TECH-LAB: ASSETSENTINEL PRO v4.5")
+    print("="*60 + "\n")
+    
+    # Instance Configuration: Monitoring BTC Risk Floor at $98,500
+    orchestrator = AssetSentinelOrchestrator(ticker="BTC-USD", risk_floor=98500.0)
+    
+    try:
+        await orchestrator.start_surveillance_node()
     except KeyboardInterrupt:
-        logging.info("Sentinel Protocol gracefully decommissioned. Persisting final audit logs.")
+        logging.info("🏁 Sentinel System decommissioned by System Architect.")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
