@@ -1,13 +1,12 @@
 """
-InsightOrchestrator Pro: v5.5 Executive Intelligence Suite
----------------------------------------------------------
-A high-fidelity visualization engine designed for deterministic 
-market analysis, leveraging hierarchical Sunburst orchestration 
-and interactive KPI telemetry.
+InsightOrchestrator Pro: v5.6 Global Enterprise Edition
+-------------------------------------------------------
+An industrial-grade BI engine designed for hierarchical market analysis, 
+featuring deterministic data orchestration and interactive KPI telemetry.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Full-Stack Systems / Data Engineering
-Date: April 15，2026
+Date: April 15, 2026
 """
 
 import pandas as pd
@@ -17,9 +16,9 @@ import logging
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import Final, Optional, Dict
+from typing import Final, Optional, List
 
-# 1. Industrial Infrastructure Configuration
+# 1. Industrial Infrastructure & Telemetry Configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - [%(levelname)s] - %(message)s',
@@ -30,7 +29,7 @@ logging.basicConfig(
 )
 
 class InsightOrchestrator:
-    def __init__(self, source_node: str = 'fiverr_report_finished.xlsx'):
+    def __init__(self, source_node: str = 'fiverr_market_data.xlsx'):
         self.source_path: Final[Path] = Path(source_node)
         self.vault_path: Final[Path] = Path('Vault/Dashboards')
         self.theme: Final[str] = 'plotly_dark'
@@ -43,20 +42,26 @@ class InsightOrchestrator:
         """Provisions the secure local storage and audit layers."""
         self.vault_path.mkdir(parents=True, exist_ok=True)
         Path("Vault/Logs").mkdir(parents=True, exist_ok=True)
-        logging.info("🛠️ Orchestration vault synchronized.")
+        logging.info("🛠️ Orchestration vault synchronized. Environment: Production.")
 
     def _ingest_and_validate_telemetry(self) -> pd.DataFrame:
-        """Loads raw data and applies deterministic cleaning protocols."""
+        """Loads raw telemetry and applies deterministic sanitization protocols."""
         logging.info(f"Ingesting market telemetry from: {self.source_path.name}")
         try:
+            # Note: Expecting English headers: 'Product_Name', 'Total_Revenue'
             df = pd.read_excel(self.source_path)
-            # Ensure numeric integrity for financial metrics
-            df['销售总额'] = pd.to_numeric(df['销售总额'], errors='coerce').fillna(0)
             
-            # Feature Engineering: Calculate Contribution Percentage
+            # Ensure numeric integrity for financial metrics
+            # Logic: Convert to numeric, coerce errors to NaN, then fill with 0
+            df['Total_Revenue'] = pd.to_numeric(df['Total_Revenue'], errors='coerce').fillna(0)
+            
+            # Feature Engineering: Calculate Relative Contribution
             # Formula: $$Contribution\_Pct = \frac{Value_{node}}{\sum Value_{total}} \times 100$$
-            total_revenue = df['销售总额'].sum()
-            df['Contribution_Pct'] = (df['销售总额'] / total_revenue * 100).round(2)
+            total_revenue = df['Total_Revenue'].sum()
+            if total_revenue == 0:
+                raise ValueError("Revenue node is null. Data ingestion aborted.")
+                
+            df['Contribution_Pct'] = (df['Total_Revenue'] / total_revenue * 100).round(2)
             
             return df
         except Exception as e:
@@ -72,8 +77,8 @@ class InsightOrchestrator:
         # Sunburst is superior for nested categorical data in 2026-spec BI
         fig = px.sunburst(
             df,
-            path=['产品名称'], # If you have categories, add them here: ['Category', '产品名称']
-            values='销售总额',
+            path=['Product_Name'], 
+            values='Total_Revenue',
             color='Contribution_Pct',
             color_continuous_scale='Greens',
             title=f"Strategic Revenue Distribution | FY {datetime.now().year}",
@@ -91,7 +96,7 @@ class InsightOrchestrator:
             margin=dict(t=80, b=40, l=40, r=40)
         )
 
-        # Professional Data Traces
+        # Professional Data Traces for Interactive Handshakes
         fig.update_traces(
             marker=dict(line=dict(color='#000000', width=1)),
             hovertemplate='<b>%{label}</b><br>Revenue: $%{value:,.2f}<br>Contribution: %{customdata[0]:.2f}%'
@@ -113,11 +118,12 @@ class InsightOrchestrator:
 
 if __name__ == "__main__":
     print("\n" + "="*60)
-    print("      YANG-TECH-LAB: INSIGHT ORCHESTRATOR v5.5")
+    print("      YANG-TECH-LAB: INSIGHT ORCHESTRATOR v5.6")
     print("="*60 + "\n")
     
     try:
-        orchestrator = InsightOrchestrator(source_node='fiverr_report_finished.xlsx')
+        # Standard Operating Procedure (SOP) Initialization
+        orchestrator = InsightOrchestrator(source_node='fiverr_market_data.xlsx')
         orchestrator.synthesize_platform_asset()
     except Exception as fatal_e:
         logging.critical(f"System Crash during orchestration: {fatal_e}")
