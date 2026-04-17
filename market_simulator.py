@@ -1,12 +1,13 @@
 """
-MarketOrchestrator Pro: Enterprise Time-Series Synthesis Engine
----------------------------------------------------------------
-A high-fidelity data engineering utility designed to synthesize 
-multi-dimensional market datasets with Gaussian noise and trend biases.
+MarketOrchestrator Pro: v5.8 Quantitative Intelligence Engine
+-------------------------------------------------------------
+An industrial-grade data synthesis suite designed for high-fidelity 
+time-series generation, featuring vectorized Gaussian noise injection 
+and deterministic trend orchestration.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Data Engineering / Strategic Intelligence
-Date: March 2026
+Category: Data Engineering / Quantitative Finance
+Date: April 16, 2026
 """
 
 import pandas as pd
@@ -14,95 +15,98 @@ import numpy as np
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Final, Optional
+from typing import Final, Dict, List
 
-# 1. Industrial Logging Configuration
+# 1. Industrial Telemetry Configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - [%(levelname)s] - %(message)s',
     handlers=[
-        logging.FileHandler("synthesis_audit.log"),
+        logging.FileHandler("Vault/Logs/synthesis_audit.log"),
         logging.StreamHandler()
     ]
 )
 
 class MarketOrchestrator:
-    def __init__(self, cycle_length: int = 30):
+    def __init__(self, cycle_length: int = 60, seed: int = 42):
         self.cycle_length: Final[int] = cycle_length
         self.vault_path: Final[Path] = Path("Vault/Market_Intelligence.csv")
         
-        # Professional-grade hardware assets with targeted base valuations
-        self.asset_registry: Dict[str, float] = {
-            "ESP32-S3 Ultra-Link": 18.50,
-            "LogicTrace-16 Pro": 145.00,
-            "RF-Vector Signal Analyzer": 890.00,
-            "Yang-Pad Macro-Console": 65.00,
-            "KiCad-Pro 9.0 Plugin License": 299.00
+        # Deterministic Engineering: Fixed seed for reproducible datasets
+        np.random.seed(seed)
+        
+        # High-Fidelity Asset Registry (Targeting 2026 Hardware Market)
+        self.asset_registry: Final[Dict[str, float]] = {
+            "ESP32-S3-N16R8-Module": 12.50,
+            "STM32H7-Core-Board": 45.00,
+            "LogicTrace-Alpha-16": 125.00,
+            "KiCad-Pro-9-License": 299.00,
+            "Yang-Lab-IoT-Gateway": 85.00
         }
-        self._bootstrap_vault()
+        self._bootstrap_environment()
 
-    def _bootstrap_vault(self):
-        """Provisions the persistence layer and ensures directory integrity."""
+    def _bootstrap_environment(self):
+        """Provisions the secure local persistence layer."""
         self.vault_path.parent.mkdir(parents=True, exist_ok=True)
-        logging.info("🛠️ Strategic Data Vault synchronized.")
+        Path("Vault/Logs").mkdir(parents=True, exist_ok=True)
+        logging.info(f"🛠️ Orchestration Vault Synchronized. Cycle Length: {self.cycle_length} Days.")
 
-    def _apply_gaussian_fluctuation(self, base: float, volatility: float = 0.05) -> float:
+    def execute_vectorized_synthesis(self) -> pd.DataFrame:
         """
-        Applies a Normal (Gaussian) distribution to simulate realistic market noise.
-        Standard Deviation (sigma) is set to 5% of the base price.
+        Orchestrates high-throughput data synthesis via NumPy vectorization.
+        This replaces iterative loops to ensure peak computational efficiency.
         """
-        # Using a Gaussian distribution centered at 1.0
-        noise = np.random.normal(1.0, volatility)
-        return round(base * noise, 2)
-
-    def _calculate_trend_bias(self, day_index: int) -> float:
-        """Simulates a non-linear market trend (Bullish bias for 2026)."""
-        # Formula: 0.1% linear growth per day to simulate inflation/demand
-        return 1 + (day_index * 0.001)
-
-    def execute_synthesis_cycle(self) -> pd.DataFrame:
-        """Orchestrates the strategic data generation sequence."""
-        logging.info(f"🚀 Initiating {self.cycle_length}-day high-fidelity synthesis pulse...")
-        records: List[Dict] = []
-
+        logging.info("🚀 Initiating high-fidelity synthesis pulse...")
+        
+        # Generate time dimension
         start_date = datetime.now() - timedelta(days=self.cycle_length)
+        date_range = [ (start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(self.cycle_length) ]
+        
+        all_records = []
 
-        for day_idx in range(self.cycle_length):
-            current_date = (start_date + timedelta(days=day_idx)).strftime("%Y-%m-%d")
-            trend = self._calculate_trend_bias(day_idx)
+        for asset, base_val in self.asset_registry.items():
+            # 1. Generate Trend Component: $T = 1 + (index \times 0.0012)$
+            # 2026 Bullish bias orchestrated for hardware demand
+            day_indices = np.arange(self.cycle_length)
+            trend_factors = 1 + (day_indices * 0.0012)
+            
+            # 2. Inject Gaussian Noise: $N \sim \mathcal{N}(1.0, 0.04^2)$
+            noise_factors = np.random.normal(1.0, 0.04, self.cycle_length)
+            
+            # 3. Synthesize Final Valuation: $V = Base \times T \times N$
+            valuations = np.round(base_val * trend_factors * noise_factors, 2)
+            
+            # 4. Logic: Cost of Goods Sold (COGS) fixed at 48% of baseline
+            cogs = round(base_val * 0.48, 2)
+            margins = np.round(valuations - cogs, 2)
+            
+            asset_df = pd.DataFrame({
+                "Timestamp": date_range,
+                "Asset_ID": [asset] * self.cycle_length,
+                "Market_Valuation": valuations,
+                "COGS_Basis": [cogs] * self.cycle_length,
+                "Margin_USD": margins
+            })
+            all_records.append(asset_df)
 
-            for asset, base_val in self.asset_registry.items():
-                # Compound Logic: Base * Trend * Gaussian Noise
-                market_price = self._apply_gaussian_fluctuation(base_val * trend)
-                
-                # Logic: Production cost modeled at fixed 55% of original baseline
-                cogs = round(base_val * 0.55, 2)
-                
-                records.append({
-                    "Timestamp": current_date,
-                    "Asset_ID": asset,
-                    "Market_Valuation": market_price,
-                    "COGS_Basis": cogs,
-                    "Margin_USD": round(market_price - cogs, 2)
-                })
+        return pd.concat(all_records, ignore_index=True)
 
-        return pd.DataFrame(records)
-
-    def deploy_dataset(self):
-        """Persists the synthesized intelligence to the secure vault."""
+    def deploy_intelligence_asset(self):
+        """Finalizes the synthesis cycle and persists the asset to the vault."""
         try:
-            df = self.execute_synthesis_cycle()
+            df = self.execute_synthesis_cycle() if hasattr(self, 'execute_synthesis_cycle') else self.execute_vectorized_synthesis()
             df.to_csv(self.vault_path, index=False, encoding='utf-8-sig')
-            logging.info(f"🏆 Mission Accomplished. Dataset deployed at: {self.vault_path}")
+            logging.info(f"🏆 Strategic Asset Deployed: {self.vault_path.name}")
+            logging.info(f"📊 Dataset Dimensions: {df.shape}")
         except Exception as e:
-            logging.error(f"❌ Persistence Layer Breach: {e}")
+            logging.error(f"❌ Persistence Breach: {e}")
 
 if __name__ == "__main__":
-    # Deployment Parameters
     print("\n" + "="*55)
-    print("      YANG-TECH-LAB: STRATEGIC DATA ORCHESTRATOR")
+    print("      YANG-TECH-LAB: QUANTITATIVE ORCHESTRATOR v5.8")
     print("="*55 + "\n")
     
-    orchestrator = MarketOrchestrator(cycle_length=30)
-    orchestrator.deploy_dataset()
-    print("\n--- Synthesis Session Concluded ---")
+    engine = MarketOrchestrator(cycle_length=45)
+    engine.deploy_intelligence_asset()
+    
+    print("\n--- Session Complete: All Handled Nodes Decommissioned ---")
