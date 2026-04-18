@@ -6,7 +6,7 @@ analysis, leveraging Pareto distribution for strategic insight.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Business Intelligence / Systems Engineering
-Date: April 14, 2026
+Date: April 13, 2026
 """
 
 import pandas as pd
