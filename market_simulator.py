@@ -7,7 +7,7 @@ and deterministic trend orchestration.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Data Engineering / Quantitative Finance
-Date: April 16, 2026
+Date: April 15, 2026
 """
 
 import pandas as pd
