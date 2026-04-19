@@ -1,161 +1,175 @@
 """
-WealthOrchestrator Pro: Strategic Capital Accretion Interface
---------------------------------------------------------------
-A high-fidelity financial simulation suite designed to model 
-exponential growth trajectories via recursive compounding algorithms.
+WealthOrchestrator Pro: v6.0 Autonomous Fiscal Engine
+-----------------------------------------------------
+An industrial-grade capital orchestration suite designed for 
+deterministic growth modeling, recursive compounding analysis, 
+and high-fidelity visual telemetry.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Fintech / Web Automation / Systems Engineering
-Date: March 2026
+Category: Fintech Systems / Full-Stack Automation
+Date: April 18, 2026
 """
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from typing import List, Dict, Final, Tuple
+from datetime import datetime
+from typing import Final, Dict, List, Optional
 
-# 1. Industrial UI Configuration & Custom Styling
+# 1. Industrial Infrastructure & UI Configuration
 st.set_page_config(
-    page_title="WealthOrchestrator Pro | Yang-Tech-Lab", 
-    page_icon="📈", 
+    page_title="WealthOrchestrator v6.0 | Yang-Tech-Lab",
+    page_icon="🛰️",
     layout="wide"
 )
 
-# Professional CSS Injection for "Dark Tech" Aesthetic
+# Custom CSS for "Industrial-Grade" aesthetic
 st.markdown("""
     <style>
+    .main { background-color: #0A0A0A; }
     .stMetric {
-        background-color: #111111;
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid #333;
+        background-color: #161B22;
+        padding: 25px;
+        border-radius: 12px;
+        border: 1px solid #30363D;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
-    [data-testid="stSidebar"] {
-        background-color: #0e1117;
-    }
+    .stSlider > label { font-weight: bold; color: #58A6FF; }
     </style>
     """, unsafe_allow_html=True)
 
-class WealthEngine:
-    """The core mathematical node for recursive capital simulation."""
+class FiscalOrchestrator:
+    """The core intelligence node for non-linear capital trajectory modeling."""
     
     @staticmethod
-    def simulate_trajectory(
-        periodic_injection: float, 
-        years: int, 
-        annual_yield: float
+    def execute_simulation(
+        monthly_injection: float, 
+        horizon_years: int, 
+        annual_yield: float,
+        inflation_rate: float = 3.0
     ) -> pd.DataFrame:
         """
-        Orchestrates the compounding sequence and generates a time-series dataset.
+        Orchestrates the compounding sequence with recursive inflation-adjustment logic.
         
-        Formula: $$FV = P \times \frac{(1 + r)^n - 1}{r}$$
+        Standard Annuity Formula:
+        $$FV = P \times \frac{(1 + r)^n - 1}{r}$$
         """
-        months = years * 12
-        monthly_rate = (annual_yield / 100) / 12
+        months: Final[int] = horizon_years * 12
+        monthly_yield_rate = (annual_yield / 100) / 12
+        monthly_inflation_rate = (inflation_rate / 100) / 12
         
-        balance = 0.0
-        principal_accrued = 0.0
-        data_points = []
+        nominal_balance = 0.0
+        real_balance = 0.0  # Inflation-adjusted value
+        cumulative_principal = 0.0
+        telemetry_logs = []
         
         for m in range(1, months + 1):
-            balance = (balance + periodic_injection) * (1 + monthly_rate)
-            principal_accrued += periodic_injection
+            nominal_balance = (nominal_balance + monthly_injection) * (1 + monthly_yield_rate)
+            real_balance = (real_balance + monthly_injection) * (1 + monthly_yield_rate - monthly_inflation_rate)
+            cumulative_principal += monthly_injection
             
-            data_points.append({
-                "Month": m,
-                "Year": round(m / 12, 2),
-                "Portfolio_Valuation": round(balance, 2),
-                "Principal_Baseline": round(principal_accrued, 2),
-                "Net_Yield": round(balance - principal_accrued, 2)
-            })
-            
-        return pd.DataFrame(data_points)
+            if m % 12 == 0 or m == months:
+                telemetry_logs.append({
+                    "Year": m // 12,
+                    "Nominal_Valuation": round(nominal_balance, 2),
+                    "Real_Purchasing_Power": round(real_balance, 2),
+                    "Principal_Baseline": round(cumulative_principal, 2),
+                    "Accrued_Alpha": round(nominal_balance - cumulative_principal, 2)
+                })
+                
+        return pd.DataFrame(telemetry_logs)
 
-def render_interface():
-    """Renders the executive dashboard and interactive controls."""
-    st.title("🛰️ Strategic Capital Orchestration Interface")
-    st.caption("Industrial-Grade Wealth Simulation Engine | Powered by Yang-Tech-Lab")
+def render_dashboard():
+    """Synthesizes the executive dashboard and control interface."""
+    st.title("🛰️ Strategic Wealth Orchestration Suite")
+    st.caption(f"System Architect: Yang Jiacheng (Yang-Tech-Lab) | Node Status: Online | {datetime.now().strftime('%Y-%m-%d')}")
 
-    # --- Sidebar: Parametric Controls ---
-    st.sidebar.header("🕹️ Operational Parameters")
-    
+    # --- Sidebar: Parametric Input Layer ---
+    st.sidebar.header("🕹️ Tactical Controls")
     with st.sidebar:
-        injection = st.slider("Periodic Capital Injection ($/Mo)", 100, 20000, 1500, step=100)
-        horizon = st.slider("Temporal Maturity Window (Years)", 5, 50, 25)
-        yield_rate = st.slider("Targeted Annual Yield (%)", 1, 30, 12)
+        st.subheader("Capital Ingestion")
+        p_injection = st.number_input("Monthly Injection (USD)", 0, 100000, 2000, step=500)
+        p_horizon = st.slider("Horizon Window (Years)", 1, 50, 20)
+        
+        st.subheader("Yield Telemetry")
+        p_yield = st.slider("Targeted Annual Yield (%)", 0.0, 40.0, 10.0, step=0.5)
+        p_inflation = st.checkbox("Apply Inflation Adjustment (3.0% std)", value=True)
         
         st.divider()
-        st.info("💡 Tip: 12% is a historical benchmark for diversified equity indices.")
+        st.caption("2026 Standard: S&P 500 Historical Yield ~10.5%")
 
     # --- Engine Execution ---
-    engine = WealthEngine()
-    df = engine.simulate_trajectory(injection, horizon, yield_rate)
+    engine = FiscalOrchestrator()
+    inflation_val = 3.0 if p_inflation else 0.0
+    df = engine.execute_simulation(p_injection, p_horizon, p_yield, inflation_val)
     
     # KPIs Extraction
-    final_valuation = df.iloc[-1]["Portfolio_Valuation"]
-    total_principal = df.iloc[-1]["Principal_Baseline"]
-    net_gain = df.iloc[-1]["Net_Yield"]
-
-    # --- Section 1: Strategic Intelligence Metrics ---
-    st.subheader("📊 Executive Summary")
-    m_col1, m_col2, m_col3 = st.columns(3)
+    final_node = df.iloc[-1]
     
-    m_col1.metric("Total Principal Committed", f"${total_principal:,.0f}")
-    m_col2.metric("Projected Portfolio Value", f"${final_valuation:,.0f}")
-    m_col3.metric("Net Wealth Accretion", f"${net_gain:,.0f}", 
-                delta=f"{((net_gain/total_principal)*100):.1f}% ROI")
+    # --- Phase 1: High-Fidelity Metrics ---
+    st.subheader("📊 Executive Intelligence Summary")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    col1.metric("Principal Committed", f"${final_node['Principal_Baseline']:,.0f}")
+    col2.metric("Nominal Portfolio", f"${final_node['Nominal_Valuation']:,.0f}")
+    col3.metric("Purchasing Power (Real)", f"${final_node['Real_Purchasing_Power']:,.0f}")
+    
+    roi_pct = (final_node['Accrued_Alpha'] / final_node['Principal_Baseline']) * 100
+    col4.metric("Net Alpha Accretion", f"${final_node['Accrued_Alpha']:,.0f}", delta=f"{roi_pct:.1f}% Total ROI")
 
-    # --- Section 2: Visual Intelligence (Dynamic Plotly) ---
-    st.subheader("📈 Future Value Trajectory")
+    # --- Phase 2: Visual Intelligence (Plotly Orchestration) ---
+    st.subheader("📈 Future Value Trajectory & Volatility Simulation")
     
     fig = go.Figure()
     
-    # Portfolio Growth Area
+    # Nominal Growth Area
     fig.add_trace(go.Scatter(
-        x=df['Year'], y=df['Portfolio_Valuation'],
-        mode='lines',
-        name='Compounded Equity',
-        line=dict(width=3, color='#3498db'),
-        fill='tozeroy',
-        fillcolor='rgba(52, 152, 219, 0.1)'
+        x=df['Year'], y=df['Nominal_Valuation'],
+        mode='lines+markers', name='Nominal Valuation',
+        line=dict(color='#58A6FF', width=4),
+        fill='tozeroy', fillcolor='rgba(88, 166, 255, 0.1)'
     ))
+    
+    # Real Purchasing Power
+    if p_inflation:
+        fig.add_trace(go.Scatter(
+            x=df['Year'], y=df['Real_Purchasing_Power'],
+            mode='lines', name='Real Value (Inflation-Adj)',
+            line=dict(color='#238636', width=2, dash='dash')
+        ))
     
     # Principal Baseline
     fig.add_trace(go.Scatter(
         x=df['Year'], y=df['Principal_Baseline'],
-        mode='lines',
-        name='Principal Baseline',
-        line=dict(width=2, color='#e74c3c', dash='dot')
+        mode='lines', name='Principal Committed',
+        line=dict(color='#F85149', width=2, dash='dot')
     ))
 
     fig.update_layout(
         template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
         hovermode="x unified",
-        margin=dict(l=0, r=0, t=20, b=0),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        xaxis_title="Timeline (Years)",
-        yaxis_title="Valuation (USD)",
-        height=500
+        margin=dict(l=0, r=0, t=30, b=0),
+        xaxis=dict(title="Operational Horizon (Years)", gridcolor='#30363D'),
+        yaxis=dict(title="Valuation (USD)", gridcolor='#30363D')
     )
     
     st.plotly_chart(fig, use_container_width=True)
 
-    # --- Section 3: Technical Metadata ---
+    # --- Phase 3: Technical Appendix ---
     st.divider()
-    exp1, exp2 = st.columns(2)
-    
-    with exp1:
-        with st.expander("📝 Mathematical Foundations"):
-            st.write("The simulation leverages the standard annuity formula:")
-            st.latex(r"FV = P \times \frac{(1 + r)^n - 1}{r}")
-            st.caption("P=Injection, r=Monthly Rate, n=Months.")
-
-    with exp2:
-        with st.expander("📁 Raw Intelligence Payload"):
-            st.dataframe(df.tail(10), use_container_width=True)
-
-    st.caption("System Architect: Yang Jiacheng | High-Fidelity Automation & IoT Logic.")
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        with st.expander("📁 Inspect Raw Intelligence Payload (JSON/CSV)"):
+            st.dataframe(df.style.highlight_max(axis=0), use_container_width=True)
+    with c2:
+        with st.expander("🛠️ System Architecture"):
+            st.info("Deterministic Logic Gate: Compound Interest.")
+            st.latex(r"Accretion_{Rate} = \sum_{m=1}^{n} (I \times (1+r)^m)")
+            st.caption("Engine: Yang-Tech-Lab v6.0")
 
 if __name__ == "__main__":
-    render_interface()
+    render_dashboard()
