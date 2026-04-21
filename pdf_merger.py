@@ -6,7 +6,7 @@ to synthesize, merge, and inject metadata into multi-stage PDF assets.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Document Engineering / RPA
-Date:  April 16，2026
+Date:  April 17，2026
 """
 
 import logging
