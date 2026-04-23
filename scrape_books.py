@@ -1,12 +1,12 @@
 """
-IngestionEngine Pro: Enterprise Data Acquisition Suite
--------------------------------------------------------
-A high-performance, resilient orchestration engine designed for 
-automated entity extraction and strategic data persistence.
+DataOrchestrator Pro: v6.2 Enterprise Edition
+---------------------------------------------
+An industrial-grade, context-aware ingestion engine designed for 
+deterministic entity extraction and high-fidelity persistence.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
-Category: Data Engineering / Systems Automation
-Date: March 2026
+Category: Data Engineering / Industrial Automation
+Date: April 22, 2026
 """
 
 import logging
@@ -14,106 +14,123 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Optional, Final
+from dataclasses import dataclass, asdict
+from typing import List, Dict, Optional, Final, Any
 from requests import Session, adapters
 from urllib3.util.retry import Retry
 
-# 1. Industrial Logging Configuration (Log to both console and file)
+# 1. Industrial Infrastructure Configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - [%(levelname)s] - %(message)s',
     handlers=[
-        logging.FileHandler("ingestion_audit.log"),
+        logging.FileHandler("Vault/Logs/ingestion_audit.log"),
         logging.StreamHandler()
     ]
 )
 
-class IngestionEngine:
+@dataclass(frozen=True)
+class MarketEntity:
+    """Immutable data schema for strategic market assets."""
+    title: str
+    valuation_gbp: float
+    sync_timestamp: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+class DataOrchestrator:
     def __init__(self, target_node: str):
         self.target_node: Final[str] = target_node
         self.vault_path: Final[Path] = Path("Vault/Intelligence")
-        self.registry: List[Dict[str, str]] = []
-        
-        # Initialize resilient session with automated retry protocols
-        self.session = self._initialize_resilient_session()
+        self.registry: List[MarketEntity] = []
+        self.session: Optional[Session] = None
         self._bootstrap_environment()
 
     def _bootstrap_environment(self):
-        """Provisions the secure data vault for persistence."""
+        """Provisions the secure data vault and audit layers."""
         self.vault_path.mkdir(parents=True, exist_ok=True)
-        logging.info(f"🛠️ Environment synchronized at: {self.vault_path.resolve()}")
+        Path("Vault/Logs").mkdir(parents=True, exist_ok=True)
+        logging.info(f"🛠️ Node Environment Synchronized: {self.vault_path.resolve()}")
 
-    def _initialize_resilient_session(self) -> Session:
-        """Configures a professional HTTP session with exponential backoff retries."""
-        session = Session()
-        session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    def __enter__(self):
+        """Initializes the resilient HTTP session context."""
+        self.session = Session()
+        self.session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         })
         
-        # Retry logic: 5 retries on 502, 503, 504 with backoff factor
-        retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
-        adapter = adapters.HTTPAdapter(max_retries=retries)
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
-        return session
+        # 2026 Strategy: Exponential backoff for handling network jitter
+        retries = Retry(total=5, backoff_factor=1.5, status_forcelist=[500, 502, 503, 504])
+        adapter = adapters.HTTPAdapter(max_retries=retries, pool_connections=10, pool_maxsize=10)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+        return self
 
-    def fetch_strategic_data(self) -> Optional[str]:
-        """Initiates a secure handshake and retrieves the raw DOM payload."""
-        logging.info(f"📡 Establishing connection to node: {self.target_node}")
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Safely decommissions the session and releases network handles."""
+        if self.session:
+            self.session.close()
+            logging.info("🏁 Sentinel Protocol Offline. Resources released.")
+
+    def ingest_raw_payload(self) -> Optional[str]:
+        """Initiates a secure handshake and retrieves the DOM telemetry."""
+        logging.info(f"📡 Synchronizing with Node: {self.target_node}")
         try:
-            response = self.session.get(self.target_node, timeout=12)
+            response = self.session.get(self.target_node, timeout=15)
             response.raise_for_status()
-            logging.info("✅ Handshake successful. Data ingestion initiated.")
             return response.text
         except Exception as e:
-            logging.error(f"❌ Connection Breach: {e}")
+            logging.error(f"❌ Handshake Failure: {e}")
             return None
 
-    def transform_dom_to_entities(self, html_content: str):
-        """Orchestrates DOM parsing and executes data transformation logic."""
-        if not html_content:
-            return
+    def transform_payload(self, html_content: str):
+        """Orchestrates DOM parsing and executes non-linear data transformation."""
+        if not html_content: return
 
         soup = BeautifulSoup(html_content, "html.parser")
-        product_nodes = soup.find_all("article", class_="product_pod")
+        nodes = soup.select("article.product_pod")
         
-        logging.info(f"Analyzing {len(product_nodes)} detected entities.")
+        logging.info(f"Analyzing {len(nodes)} detected entities.")
 
-        for node in product_nodes:
+        for node in nodes:
             try:
                 title = node.h3.a["title"]
-                price_raw = node.find("p", class_="price_color").text
-                # Advanced sanitization: targeting numeric precision
-                price_clean = price_raw.replace('£', '').replace('Â', '').strip()
+                price_text = node.select_one("p.price_color").text
+                # Precision cleaning logic
+                price_numeric = float(''.join(c for c in price_text if c.isdigit() or c == '.'))
                 
-                self.registry.append({
-                    'Entity_ID': title,
-                    'Market_Value': price_clean,
-                    'Sync_Timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                })
-            except (AttributeError, KeyError) as e:
-                logging.warning(f"⚠️ Parsing anomaly detected for an entity: {e}")
+                self.registry.append(MarketEntity(
+                    title=title,
+                    valuation_gbp=price_numeric
+                ))
+            except Exception as e:
+                logging.warning(f"⚠️ Telemetry Anomaly: {e}")
 
-    def deploy_to_vault(self, filename: str):
+    def deploy_to_vault(self):
         """Persists the acquired intelligence to a structured Excel binary."""
         if not self.registry:
-            logging.error("Deployment aborted: No valid entities in the registry.")
+            logging.error("Deployment aborted: Registry is null.")
             return
 
-        target_file = self.vault_path / filename
-        logging.info(f"💾 Persisting strategic assets to: {target_file}")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        target_file = self.vault_path / f"Market_Intel_{timestamp}.xlsx"
         
-        df = pd.DataFrame(self.registry)
-        df.to_excel(target_file, index=False)
-        logging.info("🏆 Operation Accomplished. System returning to standby.")
+        # Data Transformation for persistence
+        df = pd.DataFrame([asdict(entity) for entity in self.registry])
+        
+        try:
+            df.to_excel(target_file, index=False)
+            logging.info(f"🏆 Strategic Asset Persisted: {target_file.name}")
+        except Exception as e:
+            logging.error(f"❌ Persistence Breach: {e}")
 
 if __name__ == "__main__":
-    # Operational Parameters
+    print("\n" + "="*60)
+    print("      YANG-TECH-LAB: DATA ORCHESTRATOR PRO v6.2")
+    print("="*60 + "\n")
+    
     TARGET_GRID = "http://books.toscrape.com/"
-    OUTPUT_ASSET = f"Market_Intelligence_{datetime.now().strftime('%Y%m%d')}.xlsx"
 
-    # Execution Sequence
-    engine = IngestionEngine(target_node=TARGET_GRID)
-    payload = engine.fetch_strategic_data()
-    engine.transform_dom_to_entities(payload)
-    engine.deploy_to_vault(filename=OUTPUT_ASSET)
+    # Using Context Manager for guaranteed resource orchestration
+    with DataOrchestrator(target_node=TARGET_GRID) as orchestrator:
+        raw_data = orchestrator.ingest_raw_payload()
+        orchestrator.transform_payload(raw_data)
+        orchestrator.deploy_to_vault()
