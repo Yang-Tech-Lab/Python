@@ -6,7 +6,7 @@ deterministic entity extraction and high-fidelity persistence.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Data Engineering / Industrial Automation
-Date: April 22, 2026
+Date: April 19, 2026
 """
 
 import logging
