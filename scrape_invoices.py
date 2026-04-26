@@ -6,7 +6,7 @@ regex-based extraction, and persistence of fiscal metrics from PDF assets.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Data Engineering / Financial Automation
-Date: March 2026
+Date: April 21, 2026
 """
 
 import re
