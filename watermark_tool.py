@@ -6,7 +6,7 @@ asset protection, featuring dynamic font scaling and alpha-blending.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Computer Vision / Automation
-Date: March 20, 2026
+Date:April 21, 2026
 """
 
 import logging
