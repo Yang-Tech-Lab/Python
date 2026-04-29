@@ -6,7 +6,7 @@ surveillance and geospatial data orchestration.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Full-Stack Systems / IoT Automation
-Date: March 22, 2026
+Date: April 24, 2026
 """
 
 import os
