@@ -6,7 +6,7 @@ synchronous workflows across legacy Windows environments.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Robotic Process Automation / Systems Engineering
-Date: April 3, 2026
+Date: April 28, 2026
 """
 
 import pyautogui
