@@ -6,7 +6,7 @@ non-linear e-commerce datasets for algorithmic stress-testing.
 
 Author: Yang Jiacheng (Yang-Tech-Lab)
 Category: Data Engineering / Quantitative Analytics
-Date: April 8, 2026
+Date: May 3, 2026
 """
 
 import pandas as pd
