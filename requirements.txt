@@ -1,9 +1,0 @@
-# --- Yang-Tech-Lab Core Armory ---
-streamlit
-requests
-python-dotenv
-pandas
-plotly
-xlsxwriter
-pyserial
-rich
